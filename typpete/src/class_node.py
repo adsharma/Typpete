@@ -47,7 +47,7 @@ class ClassNode:
             result.update(parent.all_parents())
         return result
 
-    def get_literal(self, transformer = None):
+    def get_literal(self, transformer=None):
         """
         Creates a Z3 expression representing this type. If this is a generic type,
         will use the variables from self.quantified() as the type arguments.
@@ -58,7 +58,9 @@ class ClassNode:
             constr = getattr(self.type_sort, self.name[0])
             args = self.quantified()
             if transformer:
-                args = [transformer(a) if not isinstance(a, ArithRef) else a for a in args]
+                args = [
+                    transformer(a) if not isinstance(a, ArithRef) else a for a in args
+                ]
             return constr(*args)
 
     def get_literal_with_args(self, var):
@@ -95,7 +97,9 @@ class ClassNode:
         res = []
         if isinstance(self.name, tuple):
             for i, arg in enumerate(self.name[1:]):
-                sort = self.type_sort if not arg.endswith('defaults_args') else IntSort()
+                sort = (
+                    self.type_sort if not arg.endswith("defaults_args") else IntSort()
+                )
                 cur = Const("y" + str(i), sort)
                 res.append(cur)
         self._qf = res

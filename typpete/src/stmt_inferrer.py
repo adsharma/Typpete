@@ -67,14 +67,20 @@ def _infer_one_target(target, context, solver):
     elif isinstance(target, ast.List):
         list_type = solver.new_z3_const("assign")
         for elt in target.elts:
-            solver.add(list_type == _infer_one_target(elt, context, solver),
-                       fail_message="List assignment in line {}".format(target.lineno))
+            solver.add(
+                list_type == _infer_one_target(elt, context, solver),
+                fail_message="List assignment in line {}".format(target.lineno),
+            )
         return solver.z3_types.list(list_type)
     target_type = expr.infer(target, context, solver)
 
     if isinstance(target, ast.Subscript):
-        solver.add(axioms.subscript_assignment(expr.infer(target.value, context, solver), solver.z3_types),
-                   fail_message="Subscript assignment in line {}".format(target.lineno))
+        solver.add(
+            axioms.subscript_assignment(
+                expr.infer(target.value, context, solver), solver.z3_types
+            ),
+            fail_message="Subscript assignment in line {}".format(target.lineno),
+        )
 
     return target_type
 
@@ -95,8 +101,10 @@ def _infer_assignment_target(target, context, value_type, solver):
         - Compound: Ex: a, b[0], [c, d], e["key"] = 1, 2.0, [True, False], "value"
     """
     target_type = _infer_one_target(target, context, solver)
-    solver.add(axioms.assignment(target_type, value_type, solver.z3_types),
-               fail_message="Assignment in line {}".format(target.lineno))
+    solver.add(
+        axioms.assignment(target_type, value_type, solver.z3_types),
+        fail_message="Assignment in line {}".format(target.lineno),
+    )
 
     # Adding weight of 2 to give the assignment soft constraint a higher priority over others.
     solver.optimize.add_soft(target_type == value_type, weight=2)
@@ -104,7 +112,11 @@ def _infer_assignment_target(target, context, value_type, solver):
 
 
 def _is_type_var_declaration(node):
-    return isinstance(node, ast.Call) and isinstance(node.func, ast.Name) and node.func.id == "TypeVar"
+    return (
+        isinstance(node, ast.Call)
+        and isinstance(node.func, ast.Name)
+        and node.func.id == "TypeVar"
+    )
 
 
 def _infer_annotated_assign(node, context, solver):
@@ -115,8 +127,10 @@ def _infer_annotated_assign(node, context, solver):
     else:
         target_type = _infer_one_target(node.target, context, solver)
     annotation_type = solver.resolve_annotation(node.annotation, get_module(node))
-    solver.add(target_type == annotation_type,
-               fail_message="Annotated assignment in line {}".format(node.lineno))
+    solver.add(
+        target_type == annotation_type,
+        fail_message="Annotated assignment in line {}".format(node.lineno),
+    )
 
 
 def _infer_assign(node, context, solver):
@@ -124,7 +138,9 @@ def _infer_assign(node, context, solver):
 
     if _is_type_var_declaration(node.value):
         module = get_module(node)
-        solver.annotation_resolver.add_type_var(node.targets[0], node.value, solver, module)
+        solver.annotation_resolver.add_type_var(
+            node.targets[0], node.value, solver, module
+        )
     else:
         value_type = expr.infer(node.value, context, solver)
         for target in node.targets:
@@ -145,7 +161,9 @@ def _infer_augmented_assign(node, context, solver):
     """
     target_type = expr.infer(node.target, context, solver)
     value_type = expr.infer(node.value, context, solver)
-    result_type = expr.binary_operation_type(target_type, node.op, value_type, node.lineno, solver)
+    result_type = expr.binary_operation_type(
+        target_type, node.op, value_type, node.lineno, solver
+    )
 
     _infer_assignment_target(node.target, context, result_type, solver)
 
@@ -170,8 +188,10 @@ def _delete_element(target, context, lineno, solver):
     elif isinstance(target, ast.Subscript):
         expr.infer(target, context, solver)
         indexed_type = expr.infer(target.value, context, solver)
-        solver.add(axioms.delete_subscript(indexed_type, solver.z3_types),
-                   fail_message="Deletion in line {}".format(lineno))
+        solver.add(
+            axioms.delete_subscript(indexed_type, solver.z3_types),
+            fail_message="Deletion in line {}".format(lineno),
+        )
     elif isinstance(target, ast.Attribute):
         raise NotImplementedError("Attribute deletion is not supported.")
 
@@ -188,19 +208,27 @@ def _infer_body(body, context, lineno, solver):
     """Infer the type of a code block containing multiple statements"""
     body_type = solver.new_z3_const("body")
     if len(body) == 0:
-        solver.add(body_type == solver.z3_types.none,
-                   fail_message="Body type in line {}".format(lineno))
+        solver.add(
+            body_type == solver.z3_types.none,
+            fail_message="Body type in line {}".format(lineno),
+        )
         return body_type
     stmts_types = []
     for stmt in body:
         stmt_type = infer(stmt, context, solver)
         stmts_types.append(stmt_type)
-        solver.add(axioms.body(body_type, stmt_type, solver.z3_types),
-                   fail_message="Body type in line {}".format(lineno))
+        solver.add(
+            axioms.body(body_type, stmt_type, solver.z3_types),
+            fail_message="Body type in line {}".format(lineno),
+        )
     # The body type should be none if all statements have none type.
-    solver.add(z3_types.Implies(z3_types.And([x == solver.z3_types.none for x in stmts_types]),
-                                body_type == solver.z3_types.none),
-               fail_message="Body type in line {}".format(lineno))
+    solver.add(
+        z3_types.Implies(
+            z3_types.And([x == solver.z3_types.none for x in stmts_types]),
+            body_type == solver.z3_types.none,
+        ),
+        fail_message="Body type in line {}".format(lineno),
+    )
 
     return body_type
 
@@ -227,8 +255,12 @@ def _infer_control_flow(node, context, solver):
     var_is_instance = None
     if hasattr(node, "test"):
         expr.infer(node.test, context, solver)
-        if (isinstance(node.test, ast.Call) and isinstance(node.test.func, ast.Name)
-           and node.test.func.id == "isinstance" and len(node.test.args) == 2):
+        if (
+            isinstance(node.test, ast.Call)
+            and isinstance(node.test.func, ast.Name)
+            and node.test.func.id == "isinstance"
+            and len(node.test.args) == 2
+        ):
             # isinstance(x, t) test: Make `x` to be of type `t` in the then branch
             # The only allowed case is when `x` is variable and `t` is a single type (not a tuple).
 
@@ -236,7 +268,9 @@ def _infer_control_flow(node, context, solver):
             t = solver.resolve_annotation(node.test.args[1], get_module(node))
 
             # Set `x` to be an instance of `t` in the then branch
-            body_context.isinstance_nodes[ast.dump(node.test.args[0], annotate_fields=False)] = t
+            body_context.isinstance_nodes[
+                ast.dump(node.test.args[0], annotate_fields=False)
+            ] = t
 
             # Keep track of the name of the variable `x`
             if isinstance(node.test.args[0], ast.Name):
@@ -250,16 +284,24 @@ def _infer_control_flow(node, context, solver):
         if context.has_variable(v) and v != var_is_instance:
             t1 = body_context.types_map[v]
             t2 = context.get_type(v)
-            solver.add(t1 == t2,
-                       fail_message="re-assigning in flow branching in line {}".format(node.lineno))
+            solver.add(
+                t1 == t2,
+                fail_message="re-assigning in flow branching in line {}".format(
+                    node.lineno
+                ),
+            )
 
     # Re-assigning variables in the else branch
     for v in else_context.types_map:
         if context.has_variable(v):
             t1 = else_context.types_map[v]
             t2 = context.get_type(v)
-            solver.add(t1 == t2,
-                       fail_message="re-assigning in flow branching in line {}".format(node.lineno))
+            solver.add(
+                t1 == t2,
+                fail_message="re-assigning in flow branching in line {}".format(
+                    node.lineno
+                ),
+            )
 
     # Take intersection of variables in both contexts
     for v in body_context.types_map:
@@ -271,18 +313,27 @@ def _infer_control_flow(node, context, solver):
             if inference_config["enforce_same_type_in_branches"]:
                 branch_axioms = [t1 == var_type, t2 == var_type]
             else:
-                branch_axioms = [solver.z3_types.subtype(t1, var_type), solver.z3_types.subtype(t2, var_type)]
+                branch_axioms = [
+                    solver.z3_types.subtype(t1, var_type),
+                    solver.z3_types.subtype(t2, var_type),
+                ]
 
-            solver.add(branch_axioms,
-                       fail_message="subtyping in flow branching in line {}".format(node.lineno))
+            solver.add(
+                branch_axioms,
+                fail_message="subtyping in flow branching in line {}".format(
+                    node.lineno
+                ),
+            )
 
             solver.optimize.add_soft(t1 == var_type)
             solver.optimize.add_soft(t2 == var_type)
             context.set_type(v, var_type)
 
     result_type = solver.new_z3_const("control_flow")
-    solver.add(axioms.control_flow(body_type, else_type, result_type, solver.z3_types),
-               fail_message="Control flow in line {}".format(node.lineno))
+    solver.add(
+        axioms.control_flow(body_type, else_type, result_type, solver.z3_types),
+        fail_message="Control flow in line {}".format(node.lineno),
+    )
     solver.optimize.add_soft(result_type == body_type)
     solver.optimize.add_soft(result_type == else_type)
     return result_type
@@ -305,8 +356,10 @@ def _infer_for(node, context, solver):
     # - Tuple. Ex: for (a,b) in [(1,"st"), (3,"st2")]..
     # - List. Ex: for [a,b] in [(1, "st"), (3, "st2")]..
     target_type = solver.new_z3_const("for_target")
-    solver.add(axioms.for_loop(iter_type, target_type, solver.z3_types),
-               fail_message="For loop in line {}".format(node.lineno))
+    solver.add(
+        axioms.for_loop(iter_type, target_type, solver.z3_types),
+        fail_message="For loop in line {}".format(node.lineno),
+    )
 
     _infer_assignment_target(node.target, context, target_type, solver)
 
@@ -331,8 +384,12 @@ def _infer_try(node, context, solver):
     else_type = _infer_body(node.orelse, context, node.lineno, solver)
     final_type = _infer_body(node.finalbody, context, node.lineno, solver)
 
-    solver.add(axioms.try_except(body_type, else_type, final_type, result_type, solver.z3_types),
-               fail_message="Try/Except block in line {}".format(node.lineno))
+    solver.add(
+        axioms.try_except(
+            body_type, else_type, final_type, result_type, solver.z3_types
+        ),
+        fail_message="Try/Except block in line {}".format(node.lineno),
+    )
     solver.optimize.add_soft(result_type == body_type)
     solver.optimize.add_soft(result_type == else_type)
     solver.optimize.add_soft(result_type == final_type)
@@ -343,18 +400,28 @@ def _infer_try(node, context, solver):
         handler_context = context
         if handler.name:
             handler_context = Context(node, node.body, solver, parent_context=context)
-            handler_context.set_type(handler.name,
-                                     solver.annotation_resolver.resolve(handler.type, solver, get_module(node)))
-        handler_body_type = _infer_body(handler.body, handler_context, handler.lineno, solver)
-        solver.add(solver.z3_types.subtype(handler_body_type, result_type),
-                   fail_message="Exception handler in line {}".format(handler.lineno))
+            handler_context.set_type(
+                handler.name,
+                solver.annotation_resolver.resolve(
+                    handler.type, solver, get_module(node)
+                ),
+            )
+        handler_body_type = _infer_body(
+            handler.body, handler_context, handler.lineno, solver
+        )
+        solver.add(
+            solver.z3_types.subtype(handler_body_type, result_type),
+            fail_message="Exception handler in line {}".format(handler.lineno),
+        )
 
     return result_type
 
 
 def _init_func_context(node, args, context, solver, type_args):
     """Initialize the local function scope, and the arguments types"""
-    local_context = Context(node, node.body, solver, name=node.name, parent_context=context, is_func=True)
+    local_context = Context(
+        node, node.body, solver, name=node.name, parent_context=context, is_func=True
+    )
 
     # TODO starred args
 
@@ -382,10 +449,16 @@ def _infer_args_defaults(args_types, defaults, context, solver):
     A default array of length `n` represents the default values of the last `n` arguments
     """
     for i, default in enumerate(defaults):
-        arg_idx = i + len(args_types) - len(defaults)  # The defaults array correspond to the last arguments
+        arg_idx = (
+            i + len(args_types) - len(defaults)
+        )  # The defaults array correspond to the last arguments
         default_type = expr.infer(default, context, solver)
-        solver.add(solver.z3_types.subtype(default_type, args_types[arg_idx]),
-                   fail_message="Function default argument in line {}".format(defaults[i].lineno))
+        solver.add(
+            solver.z3_types.subtype(default_type, args_types[arg_idx]),
+            fail_message="Function default argument in line {}".format(
+                defaults[i].lineno
+            ),
+        )
         solver.optimize.add_soft(default_type == args_types[arg_idx])
 
 
@@ -393,7 +466,11 @@ def is_annotated(node):
     """Check the arguments and return are annotated in a function definition"""
     if not node.returns:
         return False
-    for arg in node.args.args if not hasattr(node, '_parent') or not isinstance(node._parent, ast.ClassDef) else node.args.args[1:]:
+    for arg in (
+        node.args.args
+        if not hasattr(node, "_parent") or not isinstance(node._parent, ast.ClassDef)
+        else node.args.args[1:]
+    ):
         if not arg.annotation:
             return False
     return True
@@ -408,10 +485,17 @@ def is_stub(node):
     if not is_annotated(node):
         return False
 
-    if len(node.body) == 1 and isinstance(node.body[0], ast.Expr) and isinstance(node.body[0].value, ast.Ellipsis):
+    if (
+        len(node.body) == 1
+        and isinstance(node.body[0], ast.Expr)
+        and isinstance(node.body[0].value, ast.Ellipsis)
+    ):
         return True
-    return ((len(node.body) == 1 and isinstance(node.body[0], ast.Pass))
-            or (len(node.body) == 2 and isinstance(node.body[0], ast.Expr) and isinstance(node.body[1], ast.Pass)))
+    return (len(node.body) == 1 and isinstance(node.body[0], ast.Pass)) or (
+        len(node.body) == 2
+        and isinstance(node.body[0], ast.Expr)
+        and isinstance(node.body[1], ast.Pass)
+    )
 
 
 def is_option_generic(node, solver):
@@ -442,7 +526,10 @@ def get_type_vars(node, solver):
         all_annotation_nodes = list(ast.walk(annotation))
         for n in all_annotation_nodes:
             # check all nodes which are instance of ast.Name; they are the only candidates for type vars
-            if isinstance(n, ast.Name) and n.id in solver.annotation_resolver.type_var_poss:
+            if (
+                isinstance(n, ast.Name)
+                and n.id in solver.annotation_resolver.type_var_poss
+            ):
                 if n.id not in {tv.id for tv in type_vars}:
                     type_vars.append(n)
     # if type_vars:
@@ -456,10 +543,14 @@ def get_type_vars(node, solver):
 def is_abstract(node):
     """Return True iff the FunctionDef node denotes an abstract method"""
     for decorator in node.decorator_list:
-        if isinstance(decorator, ast.Name) and decorator.id == 'abstractmethod':
+        if isinstance(decorator, ast.Name) and decorator.id == "abstractmethod":
             return True
-        if (isinstance(decorator, ast.Attribute) and isinstance(decorator.value, ast.Name)
-           and decorator.value.id == 'abc' and decorator.attr == 'abstractmethod'):
+        if (
+            isinstance(decorator, ast.Attribute)
+            and isinstance(decorator.value, ast.Name)
+            and decorator.value.id == "abc"
+            and decorator.attr == "abstractmethod"
+        ):
             return True
 
     return False
@@ -474,19 +565,28 @@ def _infer_func_def(node, context, solver):
         for arg in node.args.args:
             args_annotations.append(arg.annotation)
         defaults_count = len(node.args.defaults)
-        if hasattr(node, "method_type"):  # check if the node contains the manually added method flag
+        if hasattr(
+            node, "method_type"
+        ):  # check if the node contains the manually added method flag
             if node.method_type not in context.builtin_methods:
                 context.builtin_methods[node.method_type] = {}
-            context.builtin_methods[node.method_type][node.name] = AnnotatedFunction(args_annotations,
-                                                                                     return_annotation,
-                                                                                     defaults_count,
-                                                                                     get_module(node))
+            context.builtin_methods[node.method_type][node.name] = AnnotatedFunction(
+                args_annotations, return_annotation, defaults_count, get_module(node)
+            )
         else:
-            context.set_type(node.name, AnnotatedFunction(args_annotations, return_annotation, defaults_count, get_module(node)))
+            context.set_type(
+                node.name,
+                AnnotatedFunction(
+                    args_annotations,
+                    return_annotation,
+                    defaults_count,
+                    get_module(node),
+                ),
+            )
         return solver.z3_types.none
     method_key = node.name
     if context.name:
-        method_key = context.name + '.' + method_key
+        method_key = context.name + "." + method_key
     if method_key in solver.z3_types.method_ids:
         old_method = solver.z3_types.current_method
         solver.z3_types.current_method = solver.z3_types.method_ids[method_key]
@@ -495,16 +595,22 @@ def _infer_func_def(node, context, solver):
     if method_key in solver.z3_types.method_ids:
         if context.name and context.name in solver.config.class_type_params:
             _args = solver.config.class_type_params[context.name]
-            args += [getattr(solver.z3_types, 'tv' + str(a)) for a in _args]
+            args += [getattr(solver.z3_types, "tv" + str(a)) for a in _args]
         if solver.config.type_params.get(node.name):
             _args = solver.config.type_params.get(node.name)
-            args += [getattr(solver.z3_types, 'tv' + str(a)) for a in _args]
+            args += [getattr(solver.z3_types, "tv" + str(a)) for a in _args]
 
-    func_context, args_types = _init_func_context(node, node.args.args, context, solver, args)
+    func_context, args_types = _init_func_context(
+        node, node.args.args, context, solver, args
+    )
     result_type = context.get_type(node.name)
     result_type.args_count = len(node.args.args)
     context.set_type(node.name, result_type)
-    if hasattr(node, 'super') and node.super != context.name and node.name != '__init__':
+    if (
+        hasattr(node, "super")
+        and node.super != context.name
+        and node.name != "__init__"
+    ):
         if method_key in solver.z3_types.method_ids:
             solver.z3_types.current_method = old_method
         return
@@ -519,17 +625,23 @@ def _infer_func_def(node, context, solver):
 
     if node.returns:
         return_type = solver.resolve_annotation(node.returns, get_module(node))
-        if (inference_config["ignore_fully_annotated_function"] or is_stub(node)):
+        if inference_config["ignore_fully_annotated_function"] or is_stub(node):
             # Ignore the body if it has return annotation and one of the following conditions:
             # The configuration flag for doing so is set
             # The body begins with ellipsis
             body_type = return_type
         else:
             body_type = _infer_body(node.body, func_context, node.lineno, solver)
-        solver.add(body_type == return_type,
-                   fail_message="Return type annotation in line {}".format(node.lineno))
+        solver.add(
+            body_type == return_type,
+            fail_message="Return type annotation in line {}".format(node.lineno),
+        )
     else:
-        if hasattr(node, 'super') and node.super != context.name and node.name == '__init__':
+        if (
+            hasattr(node, "super")
+            and node.super != context.name
+            and node.name == "__init__"
+        ):
             body_type = solver.z3_types.none
         else:
             body_type = _infer_body(node.body, func_context, node.lineno, solver)
@@ -537,25 +649,40 @@ def _infer_func_def(node, context, solver):
 
         # functions with no return must have None return type except abstract methods
         if is_abstract(node):
-            solver.add(solver.z3_types.subtype(body_type, return_type),
-                       fail_message="Return type in line {}".format(node.lineno))
+            solver.add(
+                solver.z3_types.subtype(body_type, return_type),
+                fail_message="Return type in line {}".format(node.lineno),
+            )
         else:
-            solver.add(Or(
-                And(body_type == solver.z3_types.none, return_type == body_type),
-                And(body_type != solver.z3_types.none, return_type == body_type)
-            ), fail_message="Return type in line {}".format(node.lineno))
+            solver.add(
+                Or(
+                    And(body_type == solver.z3_types.none, return_type == body_type),
+                    And(body_type != solver.z3_types.none, return_type == body_type),
+                ),
+                fail_message="Return type in line {}".format(node.lineno),
+            )
 
         # Putting higher weight for this soft constraint to give it higher priority over soft-constraint
         # added by inheritance covariance/contravariance return type
         solver.optimize.add_soft(body_type == return_type, weight=2)
-    func_type = solver.z3_types.funcs[len(args_types)]((defaults_len,) + args_types + (return_type,))
+    func_type = solver.z3_types.funcs[len(args_types)](
+        (defaults_len,) + args_types + (return_type,)
+    )
     if method_key in solver.z3_types.method_ids:
         func = solver.z3_types.generics[len(args) - 1]
-        solver.add(result_type == func(*args, func_type),
-                   fail_message = "Generic function definition {} in line {}".format(node.name, node.lineno))
+        solver.add(
+            result_type == func(*args, func_type),
+            fail_message="Generic function definition {} in line {}".format(
+                node.name, node.lineno
+            ),
+        )
     else:
-        solver.add(result_type == func_type,
-                   fail_message = "Function definition {} in line {}".format(node.name, node.lineno))
+        solver.add(
+            result_type == func_type,
+            fail_message="Function definition {} in line {}".format(
+                node.name, node.lineno
+            ),
+        )
 
     if method_key in solver.z3_types.method_ids:
         solver.z3_types.current_method = old_method
@@ -563,7 +690,9 @@ def _infer_func_def(node, context, solver):
 
 
 def _infer_class_def(node, context, solver):
-    class_context = Context(node, node.body, solver, name=node.name, parent_context=context, is_class=True)
+    class_context = Context(
+        node, node.body, solver, name=node.name, parent_context=context, is_class=True
+    )
     result_type = context.get_type(node.name)
 
     class_attrs = solver.z3_types.instance_attributes[node.name]
@@ -576,14 +705,14 @@ def _infer_class_def(node, context, solver):
     for stmt in node.body:
         if isinstance(stmt, ast.FunctionDef):
             func_name = stmt.name
-            if func_name != '__init__' and func_name in inherited_funcs_to_super:
+            if func_name != "__init__" and func_name in inherited_funcs_to_super:
                 continue
         infer(stmt, class_context, solver)
 
     for base in node.bases:
         if isinstance(base, ast.Subscript) and base.value.id == "Generic":
             continue
-        if base.id == 'object':
+        if base.id == "object":
             continue
         base_classes_to_funcs[base.id] = solver.z3_types.class_to_funcs[base.id]
         bases_attrs[base.id] = solver.z3_types.instance_attributes[base.id]
@@ -591,64 +720,96 @@ def _infer_class_def(node, context, solver):
     instance_type = solver.z3_types.classes[node.name]
 
     for attr in class_attrs:
-        if (attr == '__init__' or attr in class_to_funcs and attr not in inherited_funcs_to_super
-           and "staticmethod" not in class_to_funcs[attr][1]):
+        if (
+            attr == "__init__"
+            or attr in class_to_funcs
+            and attr not in inherited_funcs_to_super
+            and "staticmethod" not in class_to_funcs[attr][1]
+        ):
             # First arg (the method receiver) is the same as instance only if it is not an inherited method
             # and not a static method
             instance_type = solver.z3_types.classes[node.name]
 
-
             if not class_to_funcs[attr][0]:
-                raise TypeError("Instance method {} in class {} should have at least one argument (the receiver)."
-                                "If you wish to create a static method, please add the appropriate decorator."
-                                .format(attr, node.name))
+                raise TypeError(
+                    "Instance method {} in class {} should have at least one argument (the receiver)."
+                    "If you wish to create a static method, please add the appropriate decorator.".format(
+                        attr, node.name
+                    )
+                )
 
             args_len = class_to_funcs[attr][0]
-            arg_accessor = getattr(solver.z3_types.type_sort, "func_{}_arg_1".format(args_len))
+            arg_accessor = getattr(
+                solver.z3_types.type_sort, "func_{}_arg_1".format(args_len)
+            )
             first_arg = arg_accessor(class_attrs[attr])
             my_name = node.name if node.name not in ALIASES else ALIASES[node.name]
             if node.name in solver.config.class_type_params:
-                args = [getattr(solver.z3_types.type_sort, "tv{}".format(str(tv)))
-                        for tv in solver.config.class_type_params[node.name]]
+                args = [
+                    getattr(solver.z3_types.type_sort, "tv{}".format(str(tv)))
+                    for tv in solver.config.class_type_params[node.name]
+                ]
                 instance_type = instance_type(*args)
-                generic_func = getattr(solver.z3_types.type_sort, "generic{}_func".format(len(args)))
+                generic_func = getattr(
+                    solver.z3_types.type_sort, "generic{}_func".format(len(args))
+                )
                 first_arg = arg_accessor(generic_func(class_attrs[attr]))
-            solver.add(first_arg == instance_type,
-                       fail_message="First arg in instance method {} in class {} has class instance type"
-                       .format(attr, node.name))
+            solver.add(
+                first_arg == instance_type,
+                fail_message="First arg in instance method {} in class {} has class instance type".format(
+                    attr, node.name
+                ),
+            )
 
-            if attr == '__init__' and attr in inherited_funcs_to_super:
+            if attr == "__init__" and attr in inherited_funcs_to_super:
                 # If __init__ is inherited, equate all the params except the first one.
                 base = inherited_funcs_to_super[attr]
                 base_args_len = solver.z3_types.class_to_funcs[base][attr][0]
                 sub_args_len = class_to_funcs[attr][0]
 
                 for i in range(1, base_args_len):
-                    base_arg_accessor = getattr(solver.z3_types.type_sort, "func_{}_arg_{}"
-                                                .format(base_args_len, i + 1))
-                    sub_arg_accessor = getattr(solver.z3_types.type_sort, "func_{}_arg_{}"
-                                               .format(sub_args_len, i + 1))
+                    base_arg_accessor = getattr(
+                        solver.z3_types.type_sort,
+                        "func_{}_arg_{}".format(base_args_len, i + 1),
+                    )
+                    sub_arg_accessor = getattr(
+                        solver.z3_types.type_sort,
+                        "func_{}_arg_{}".format(sub_args_len, i + 1),
+                    )
 
-                    solver.add(base_arg_accessor(solver.z3_types.instance_attributes[base][attr]) == sub_arg_accessor(class_attrs[attr]),
-                               fail_message="Inherited __init__ parameter in class {}".format(node.name))
+                    solver.add(
+                        base_arg_accessor(
+                            solver.z3_types.instance_attributes[base][attr]
+                        )
+                        == sub_arg_accessor(class_attrs[attr]),
+                        fail_message="Inherited __init__ parameter in class {}".format(
+                            node.name
+                        ),
+                    )
         elif attr in class_to_funcs and attr in inherited_funcs_to_super:
             base = inherited_funcs_to_super[attr]
-            solver.add(class_attrs[attr] == solver.z3_types.instance_attributes[base][attr],
-                       fail_message="Inherited method {} in subclass {} has same type as "
-                                    "that in superclass {}".format(attr, node.name, base))
+            solver.add(
+                class_attrs[attr] == solver.z3_types.instance_attributes[base][attr],
+                fail_message="Inherited method {} in subclass {} has same type as "
+                "that in superclass {}".format(attr, node.name, base),
+            )
         for base in bases_attrs:
             if attr not in class_to_funcs and attr in bases_attrs[base]:
                 # Not a method and exists in superclass
-                solver.add(class_attrs[attr] == bases_attrs[base][attr],
-                           fail_message="Field {} in subclass {} has same type"
-                                        "as that in the superclass".format(attr, node.name))
+                solver.add(
+                    class_attrs[attr] == bases_attrs[base][attr],
+                    fail_message="Field {} in subclass {} has same type"
+                    "as that in the superclass".format(attr, node.name),
+                )
         if attr not in class_context.types_map:
             # The context doesn't contain the types of the instance attributes (e.g., self.x)
             # The axioms for such attributes are already added in the condition above.
             continue
         if not isinstance(class_context.types_map[attr], AnnotatedFunction):
-            solver.add(class_attrs[attr] == class_context.types_map[attr],
-                       fail_message="Class attribute in {}".format(node.lineno))
+            solver.add(
+                class_attrs[attr] == class_context.types_map[attr],
+                fail_message="Class attribute in {}".format(node.lineno),
+            )
 
         if attr in inherited_funcs_to_super:
             continue
@@ -665,48 +826,86 @@ def _infer_class_def(node, context, solver):
                 sub_args_len = class_to_funcs[attr][0]
                 sub_defaults_len = class_to_funcs[attr][2]
                 sub_non_defaults_len = sub_args_len - sub_defaults_len
-                decorators = base_classes_to_funcs[base][attr][1] + class_to_funcs[attr][1]
+                decorators = (
+                    base_classes_to_funcs[base][attr][1] + class_to_funcs[attr][1]
+                )
 
                 if "staticmethod" in decorators:
                     if "staticmethod" not in base_classes_to_funcs[base][attr][1]:
-                        raise TypeError("Static method {} in class {} cannot override "
-                                        "non-static method.".format(attr, node.name))
+                        raise TypeError(
+                            "Static method {} in class {} cannot override "
+                            "non-static method.".format(attr, node.name)
+                        )
                     if "staticmethod" not in class_to_funcs[attr][1]:
-                        raise TypeError("Non-static method {} in class {} cannot "
-                                        "override static method.".format(attr, node.name))
+                        raise TypeError(
+                            "Non-static method {} in class {} cannot "
+                            "override static method.".format(attr, node.name)
+                        )
                 else:
                     if base_args_len > sub_args_len:
-                        raise TypeError("Method {} in subclass {} should have total arguments length "
-                                        "more than or equal that in superclass.".format(attr, node.name))
+                        raise TypeError(
+                            "Method {} in subclass {} should have total arguments length "
+                            "more than or equal that in superclass.".format(
+                                attr, node.name
+                            )
+                        )
                     if base_non_defaults_len < sub_non_defaults_len:
-                        raise TypeError("Method {} in subclass {} should have non-default arguments length less than "
-                                        "or equal that in superclass".format(attr, node.name))
+                        raise TypeError(
+                            "Method {} in subclass {} should have non-default arguments length less than "
+                            "or equal that in superclass".format(attr, node.name)
+                        )
 
                     # handle arguments and return contravariance/covariance
                     for i in range(1, base_args_len):
-                        base_arg_accessor = getattr(solver.z3_types.type_sort, "func_{}_arg_{}"
-                                                    .format(base_args_len, i + 1))
-                        sub_arg_accessor = getattr(solver.z3_types.type_sort, "func_{}_arg_{}"
-                                                   .format(sub_args_len, i + 1))
-                        if attr not in inherited_funcs_to_super or inherited_funcs_to_super[attr] != base:
+                        base_arg_accessor = getattr(
+                            solver.z3_types.type_sort,
+                            "func_{}_arg_{}".format(base_args_len, i + 1),
+                        )
+                        sub_arg_accessor = getattr(
+                            solver.z3_types.type_sort,
+                            "func_{}_arg_{}".format(sub_args_len, i + 1),
+                        )
+                        if (
+                            attr not in inherited_funcs_to_super
+                            or inherited_funcs_to_super[attr] != base
+                        ):
                             # Only add contravariant axioms if this method is not inherited from the current base class.
-                            solver.add(solver.z3_types.subtype(base_arg_accessor(bases_attrs[base][attr]),
-                                                               sub_arg_accessor(class_attrs[attr])),
-                                       fail_message="Arguments contravariance in line {}".format(node.lineno))
-                    base_return_accessor = getattr(solver.z3_types.type_sort, "func_{}_return".format(base_args_len))
-                    sub_return_accessor = getattr(solver.z3_types.type_sort, "func_{}_return".format(sub_args_len))
-
+                            solver.add(
+                                solver.z3_types.subtype(
+                                    base_arg_accessor(bases_attrs[base][attr]),
+                                    sub_arg_accessor(class_attrs[attr]),
+                                ),
+                                fail_message="Arguments contravariance in line {}".format(
+                                    node.lineno
+                                ),
+                            )
+                    base_return_accessor = getattr(
+                        solver.z3_types.type_sort,
+                        "func_{}_return".format(base_args_len),
+                    )
+                    sub_return_accessor = getattr(
+                        solver.z3_types.type_sort, "func_{}_return".format(sub_args_len)
+                    )
 
                     # Add covariant axiom otherwise
-                    solver.add(solver.z3_types.subtype(sub_return_accessor(class_attrs[attr]),
-                                                       base_return_accessor(bases_attrs[base][attr])),
-                               fail_message="Return covariance in line {}".format(node.lineno))
-                    solver.optimize.add_soft(sub_return_accessor(class_attrs[attr])
-                                             == base_return_accessor(bases_attrs[base][attr]))
+                    solver.add(
+                        solver.z3_types.subtype(
+                            sub_return_accessor(class_attrs[attr]),
+                            base_return_accessor(bases_attrs[base][attr]),
+                        ),
+                        fail_message="Return covariance in line {}".format(node.lineno),
+                    )
+                    solver.optimize.add_soft(
+                        sub_return_accessor(class_attrs[attr])
+                        == base_return_accessor(bases_attrs[base][attr])
+                    )
 
     class_type = solver.z3_types.type(instance_type)
-    if type(result_type).__name__ != 'Dummy':
-        solver.add(result_type == class_type, fail_message="Class definition in line {}".format(node.lineno))
+    if type(result_type).__name__ != "Dummy":
+        solver.add(
+            result_type == class_type,
+            fail_message="Class definition in line {}".format(node.lineno),
+        )
     result_type.is_class = True
 
     return solver.z3_types.none
@@ -739,7 +938,9 @@ def _infer_import(node, context, solver):
     print(B.A.x)
     """
     for name in node.names:
-        import_context = ImportHandler.infer_import(name.name, solver.config.base_folder, infer, solver)
+        import_context = ImportHandler.infer_import(
+            name.name, solver.config.base_folder, infer, solver
+        )
 
         if name.asname:
             # import X as Y
@@ -759,7 +960,9 @@ def _infer_import_from(node, context, solver):
         # FIXME ignore typing module for now, so as not to break type variables
         # Remove after implementing stub for typing and built-in importing
         return solver.z3_types.none
-    import_context = ImportHandler.infer_import(node.module, solver.config.base_folder, infer, solver)
+    import_context = ImportHandler.infer_import(
+        node.module, solver.config.base_folder, infer, solver
+    )
 
     if len(node.names) == 1 and node.names[0].name == "*":
         # import all module elements
@@ -803,12 +1006,20 @@ def infer(node, context, solver, parent=None):
         return _infer_control_flow(node, context, solver)
     elif isinstance(node, ast.For):
         return _infer_for(node, context, solver)
-    elif sys.version_info[0] >= 3 and sys.version_info[1] >= 5 and isinstance(node, ast.AsyncFor):
+    elif (
+        sys.version_info[0] >= 3
+        and sys.version_info[1] >= 5
+        and isinstance(node, ast.AsyncFor)
+    ):
         # AsyncFor is introduced in Python 3.5
         return _infer_for(node, context, solver)
     elif isinstance(node, ast.With):
         return _infer_with(node, context, solver)
-    elif sys.version_info[0] >= 3 and sys.version_info[1] >= 5 and isinstance(node, ast.AsyncWith):
+    elif (
+        sys.version_info[0] >= 3
+        and sys.version_info[1] >= 5
+        and isinstance(node, ast.AsyncWith)
+    ):
         # AsyncWith is introduced in Python 3.5
         return _infer_with(node, context, solver)
     elif isinstance(node, ast.Try):

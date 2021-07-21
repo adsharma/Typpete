@@ -28,15 +28,9 @@ from combinators import *
 from imp_ast import *
 
 # Operator keywords and precedence levels
-aexp_precedence_levels = [
-    ['*', '/'],
-    ['+', '-'],
-]
+aexp_precedence_levels = [["*", "/"], ["+", "-"]]
 
-bexp_precedence_levels = [
-    ['and'],
-    ['or'],
-]
+bexp_precedence_levels = [["and"], ["or"]]
 
 # Basic parsers
 def keyword(kw):
@@ -59,14 +53,12 @@ def parser():
 
 # Statements
 def stmt_list():
-    separator = keyword(';') ^ (lambda x: lambda l, r: CompoundStatement(l, r))
+    separator = keyword(";") ^ (lambda x: lambda l, r: CompoundStatement(l, r))
     return Exp(stmt(), separator)
 
 
 def stmt():
-    return assign_stmt() | \
-           if_stmt() | \
-           while_stmt()
+    return assign_stmt() | if_stmt() | while_stmt()
 
 
 def assign_stmt():
@@ -74,7 +66,7 @@ def assign_stmt():
         ((name, _), exp) = parsed
         return AssignStatement(name, exp)
 
-    return id2 + keyword(':=') + aexp() ^ process
+    return id2 + keyword(":=") + aexp() ^ process
 
 
 def if_stmt():
@@ -86,10 +78,15 @@ def if_stmt():
             false_stmt = None
         return IfStatement(condition, true_stmt, false_stmt)
 
-    return keyword('if') + bexp() + \
-           keyword('then') + Lazy(stmt_list) + \
-           Opt(keyword('else') + Lazy(stmt_list)) + \
-           keyword('end') ^ process
+    return (
+        keyword("if")
+        + bexp()
+        + keyword("then")
+        + Lazy(stmt_list)
+        + Opt(keyword("else") + Lazy(stmt_list))
+        + keyword("end")
+        ^ process
+    )
 
 
 def while_stmt():
@@ -97,42 +94,37 @@ def while_stmt():
         ((((_, condition), _), body), _) = parsed
         return WhileStatement(condition, body)
 
-    return keyword('while') + bexp() + \
-           keyword('do') + Lazy(stmt_list) + \
-           keyword('end') ^ process
+    return (
+        keyword("while") + bexp() + keyword("do") + Lazy(stmt_list) + keyword("end")
+        ^ process
+    )
 
 
 # Boolean expressions
 def bexp():
-    return precedence(bexp_term(),
-                      bexp_precedence_levels,
-                      process_logic)
+    return precedence(bexp_term(), bexp_precedence_levels, process_logic)
 
 
 def bexp_term():
-    return bexp_not() | \
-           bexp_relop() | \
-           bexp_group()
+    return bexp_not() | bexp_relop() | bexp_group()
 
 
 def bexp_not():
-    return keyword('not') + Lazy(bexp_term) ^ (lambda parsed: NotBexp(parsed[1]))
+    return keyword("not") + Lazy(bexp_term) ^ (lambda parsed: NotBexp(parsed[1]))
 
 
 def bexp_relop():
-    relops = ['<', '<=', '>', '>=', '=', '!=']
+    relops = ["<", "<=", ">", ">=", "=", "!="]
     return aexp() + any_operator_in_list(relops) + aexp() ^ process_relop
 
 
 def bexp_group():
-    return keyword('(') + Lazy(bexp) + keyword(')') ^ process_group
+    return keyword("(") + Lazy(bexp) + keyword(")") ^ process_group
 
 
 # Arithmetic expressions
 def aexp():
-    return precedence(aexp_term(),
-                      aexp_precedence_levels,
-                      process_binop)
+    return precedence(aexp_term(), aexp_precedence_levels, process_binop)
 
 
 def aexp_term():
@@ -140,12 +132,11 @@ def aexp_term():
 
 
 def aexp_group():
-    return keyword('(') + Lazy(aexp) + keyword(')') ^ process_group
+    return keyword("(") + Lazy(aexp) + keyword(")") ^ process_group
 
 
 def aexp_value():
-    return (num ^ (lambda i: IntAexp(i))) | \
-           (id2 ^ (lambda v: VarAexp(v)))
+    return (num ^ (lambda i: IntAexp(i))) | (id2 ^ (lambda v: VarAexp(v)))
 
 
 # An IMP-specific combinator for binary operator expressions (aexp and bexp)
@@ -170,12 +161,12 @@ def process_relop(parsed):
 
 
 def process_logic(op):
-    if op == 'and':
+    if op == "and":
         return lambda l, r: AndBexp(l, r)
-    elif op == 'or':
+    elif op == "or":
         return lambda l, r: OrBexp(l, r)
     else:
-        raise RuntimeError('unknown logic operator: ' + op)
+        raise RuntimeError("unknown logic operator: " + op)
 
 
 def process_group(parsed):

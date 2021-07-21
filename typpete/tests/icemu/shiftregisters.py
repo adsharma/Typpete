@@ -2,12 +2,15 @@ from chip import ActivableChip
 from util import set_binary_value
 from pin import Pin
 
+
 class ShiftRegister(ActivableChip):
     SERIAL_PINS = []
-    CLOCK_PIN = ''
-    BUFFER_PIN = '' # Pin that makes the SR buffer go to output pin. Leave blank if there's none
-    RESET_PIN = ''
-    RESULT_PINS = [] # Data is pushed from first pin to last
+    CLOCK_PIN = ""
+    BUFFER_PIN = (
+        ""
+    )  # Pin that makes the SR buffer go to output pin. Leave blank if there's none
+    RESET_PIN = ""
+    RESULT_PINS = []  # Data is pushed from first pin to last
 
     def __init__(self, *args, **kwargs):
         self.prev_clock_high = False
@@ -15,11 +18,11 @@ class ShiftRegister(ActivableChip):
         self.buffer = 0
         for code in self.OUTPUT_PINS:
             pin = Pin(code, code in self.STARTING_HIGH, self, True)
-            setattr(self, 'pin_{}'.format(pin.code), pin)
+            setattr(self, "pin_{}".format(pin.code), pin)
         for code in self.INPUT_PINS:
             pin = Pin(code, code in self.STARTING_HIGH, self)
-            setattr(self, 'pin_{}'.format(pin.code), pin)
-        self.vcc = Pin('VCC', True, self)
+            setattr(self, "pin_{}".format(pin.code), pin)
+        self.vcc = Pin("VCC", True, self)
         self.update()
 
     def is_resetting(self):
@@ -62,22 +65,22 @@ class ShiftRegister(ActivableChip):
 
 
 class CD74AC164(ShiftRegister):
-    OUTPUT_PINS = ['Q0', 'Q1', 'Q2', 'Q3', 'Q4', 'Q5', 'Q6', 'Q7']
-    INPUT_PINS = ['DS1', 'DS2', 'CP', '~MR']
-    SERIAL_PINS = ['DS1', 'DS2']
+    OUTPUT_PINS = ["Q0", "Q1", "Q2", "Q3", "Q4", "Q5", "Q6", "Q7"]
+    INPUT_PINS = ["DS1", "DS2", "CP", "~MR"]
+    SERIAL_PINS = ["DS1", "DS2"]
     RESULT_PINS = OUTPUT_PINS
-    RESET_PIN = '~MR'
-    CLOCK_PIN = 'CP'
-    STARTING_HIGH = ['~MR', 'DS2']
+    RESET_PIN = "~MR"
+    CLOCK_PIN = "CP"
+    STARTING_HIGH = ["~MR", "DS2"]
 
 
 class SN74HC595(ShiftRegister):
-    OUTPUT_PINS = ['QA', 'QB', 'QC', 'QD', 'QE', 'QF', 'QG', 'QH']
-    INPUT_PINS = ['~OE', 'RCLK', 'SER', 'SRCLK', '~SRCLR']
-    SERIAL_PINS = ['SER']
+    OUTPUT_PINS = ["QA", "QB", "QC", "QD", "QE", "QF", "QG", "QH"]
+    INPUT_PINS = ["~OE", "RCLK", "SER", "SRCLK", "~SRCLR"]
+    SERIAL_PINS = ["SER"]
     RESULT_PINS = OUTPUT_PINS
-    ENABLE_PINS = ['~OE']
-    RESET_PIN = '~SRCLR'
-    CLOCK_PIN = 'SRCLK'
-    BUFFER_PIN = 'RCLK'
-    STARTING_HIGH = ['~SRCLR']
+    ENABLE_PINS = ["~OE"]
+    RESET_PIN = "~SRCLR"
+    CLOCK_PIN = "SRCLK"
+    BUFFER_PIN = "RCLK"
+    STARTING_HIGH = ["~SRCLR"]

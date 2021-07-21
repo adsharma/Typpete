@@ -7,6 +7,7 @@ def f(A):
     x = A()
     y = A(1)
 
+
 f(A)
 
 x = A()

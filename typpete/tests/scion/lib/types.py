@@ -1,6 +1,6 @@
-
 class TypeBase(object):
     pass
+
 
 ############################
 # Basic types
@@ -18,6 +18,7 @@ class ExtensionClass(TypeBase):
     Constants for two types of extensions. These values are shared with L4
     protocol values, and an appropriate value is placed in next_hdr type.
     """
+
     HOP_BY_HOP = 0
     END_TO_END = 222  # (Expected:-) number for SCION end2end extensions.
 
@@ -77,6 +78,7 @@ class PathSegmentType(TypeBase):
     """
     PathSegmentType class, indicates a type of path request/reply.
     """
+
     UP = 0  # Request/Reply for up-paths
     DOWN = 1  # Request/Reply for down-paths
     CORE = 2  # Request/Reply for core-paths

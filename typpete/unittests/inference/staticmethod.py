@@ -6,6 +6,7 @@ class A:
     def g(self):
         return A.f()
 
+
 x = A.f()
 y = A().g()
 

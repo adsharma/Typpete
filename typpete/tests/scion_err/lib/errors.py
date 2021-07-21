@@ -65,6 +65,7 @@ class SCIONTypeError(SCIONBaseError):
 
 class SCIONServiceLookupError(SCIONBaseError):
     """Service lookup failed"""
+
     def __init__(self, o: object) -> None:
         self.args_ = (o,)
 

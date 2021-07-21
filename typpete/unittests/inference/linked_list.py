@@ -32,6 +32,7 @@ class LList:
             new_node.set_next_node(self.first_node)
             self.first_node = new_node
 
+
 n = Node(1)
 l = LList()
 

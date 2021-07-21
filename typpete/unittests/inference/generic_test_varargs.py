@@ -4,13 +4,14 @@
 def generic_tolist(a):
     return [a]
 
+
 u = generic_tolist(1.2)
 u[0] = 2.4
 v = generic_tolist(True)
 v2 = v[v[0]]
 
 
-def flatten(lists, last = None):
+def flatten(lists, last=None):
     """
     Flattens a list of lists into a flat list
     """
@@ -32,27 +33,31 @@ def flatten_dict(dicts, defaults=[]):
                 result[key] = value
     return result
 
-a = flatten([[1,2], [1,2], [True, False]])
-a = flatten([[1,2], [1,2], [True, False]], 4)
-a2 = flatten([["hi"], ['yo', 'sup']])
+
+a = flatten([[1, 2], [1, 2], [True, False]])
+a = flatten([[1, 2], [1, 2], [True, False]], 4)
+a2 = flatten([["hi"], ["yo", "sup"]])
 a4 = a[a[0]]
 
-b = [{1:[2]}, {True: [True]}, {5: [1.2, 2]}]
+b = [{1: [2]}, {True: [True]}, {5: [1.2, 2]}]
 c = b[0][1]
 
 d = flatten_dict(b, [True, 1])
 d = flatten_dict(b)
-e = flatten_dict([{1.2: ['hi']}], [3, 5])
+e = flatten_dict([{1.2: ["hi"]}], [3, 5])
+
 
 class A:
     def bar(self):
         return 1
 
+
 class B(A):
     pass
 
-ff = flatten_dict([{'hi': [A()]}, {'sup': [A()], 'hey': [B(), A()]}], ['asd', 'erer'])
-ff['hi'][0].bar()
+
+ff = flatten_dict([{"hi": [A()]}, {"sup": [A()], "hey": [B(), A()]}], ["asd", "erer"])
+ff["hi"][0].bar()
 
 
 # generic_tolist := Callable[[GTL], List[GTL]]

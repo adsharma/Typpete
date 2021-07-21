@@ -1,5 +1,6 @@
 from abc import ABCMeta, abstractmethod
 
+
 class Vehicle(metaclass=ABCMeta):
     """A vehicle for sale by Jeffco Car Dealership.
 
@@ -31,7 +32,7 @@ class Vehicle(metaclass=ABCMeta):
         """Return the price for which we would pay to purchase the vehicle."""
         if self.sold_on is None:
             return 0.0  # Not yet sold
-        return self.base_sale_price - (.10 * self.miles)
+        return self.base_sale_price - (0.10 * self.miles)
 
     @abstractmethod
     def vehicle_type(self):
@@ -47,7 +48,7 @@ class Car(Vehicle):
 
     def vehicle_type(self):
         """"Return a string representing the type of vehicle this is."""
-        return 'car'
+        return "car"
 
 
 class Truck(Vehicle):
@@ -58,7 +59,7 @@ class Truck(Vehicle):
 
     def vehicle_type(self):
         """"Return a string representing the type of vehicle this is."""
-        return 'truck'
+        return "truck"
 
 
 class Motorcycle(Vehicle):
@@ -69,7 +70,7 @@ class Motorcycle(Vehicle):
 
     def vehicle_type(self):
         """"Return a string representing the type of vehicle this is."""
-        return 'motorcycle'
+        return "motorcycle"
 
 
 car = Car(0, "", "", 2004, 2004)

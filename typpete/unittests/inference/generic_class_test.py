@@ -1,5 +1,6 @@
 # class_type_params {'Cell': ['V']}
 
+
 class Cell:
     def __init__(self, val):
         self.value = val
@@ -15,6 +16,7 @@ class A:
     def foo(self):
         return 12
 
+
 c1 = Cell(A())
 
 my_a = c1.cget()
@@ -27,7 +29,7 @@ my_a.foo()
 c2 = Cell(2)
 
 a55 = c2.value + 23
-mt = {1:"hi"}
+mt = {1: "hi"}
 mt2 = mt.copy()
 
 a1 = c2.cget() + 1

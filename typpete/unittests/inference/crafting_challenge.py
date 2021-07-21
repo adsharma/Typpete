@@ -14,25 +14,18 @@ commands = {
 
 items = {
     "flint": 50,
-
     "grass": 100,
     "hay": 0,
-
     "tree": 100,
     "log": 0,
-
     "sapling": 100,
     "twig": 0,
-
     "boulder": 30,
     "rock": 0,
-
     "pickaxe": 0,
     "axe": 0,
-
     "firepit": 0,
     "tent": 0,
-
     "torch": 0,
 }
 
@@ -44,7 +37,7 @@ craft = {
     "tent": {"twig": 10, "hay": 15},
     "firepit": {"boulder": 5, "log": 3, "twig": 1, "torch": 1},
     "torch": {"flint": 1, "grass": 1, "twig": 1},
-    "pickaxe": {"flint": 2, "twig": 1}
+    "pickaxe": {"flint": 2, "twig": 1},
 }
 
 print("'Crafting Challenge' Game")
@@ -94,7 +87,14 @@ while True:
         if item in craft:
 
             for i in craft[item]:
-                print("  you need : " + str(craft[item][i]) + " " + i + " and you have " + str(items[i]))
+                print(
+                    "  you need : "
+                    + str(craft[item][i])
+                    + " "
+                    + i
+                    + " and you have "
+                    + str(items[i])
+                )
 
             canBeMade = True
 

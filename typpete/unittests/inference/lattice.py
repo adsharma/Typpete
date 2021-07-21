@@ -1,20 +1,27 @@
 from abc import ABCMeta, abstractmethod
+
+
 class Lattice(metaclass=ABCMeta):
     @abstractmethod
-    def bottom(self): pass
+    def bottom(self):
+        pass
 
     @abstractmethod
-    def top(self): pass
+    def top(self):
+        pass
 
     @abstractmethod
-    def is_bottom(self): pass
+    def is_bottom(self):
+        pass
 
     @abstractmethod
-    def is_top(self): pass
+    def is_top(self):
+        pass
 
     @abstractmethod
-    def _less_equal(self, other): pass
-    
+    def _less_equal(self, other):
+        pass
+
     def less_equal(self, other):
         if self.is_bottom() or other.is_top():
             return True
@@ -24,7 +31,8 @@ class Lattice(metaclass=ABCMeta):
             return self._less_equal(other)
 
     @abstractmethod
-    def _join(self, other): pass
+    def _join(self, other):
+        pass
 
     def join(self, other):
         if self.is_bottom() or other.is_top():
@@ -35,7 +43,8 @@ class Lattice(metaclass=ABCMeta):
             return self._join(other)
 
     @abstractmethod
-    def _meet(self, other): pass
+    def _meet(self, other):
+        pass
 
     def meet(self, other):
         if self.is_top() or other.is_bottom():
@@ -46,7 +55,8 @@ class Lattice(metaclass=ABCMeta):
             return self._meet(other)
 
     @abstractmethod
-    def _widening(self, other): pass
+    def _widening(self, other):
+        pass
 
     def widening(self, other):
         if self.is_bottom() or other.is_top():

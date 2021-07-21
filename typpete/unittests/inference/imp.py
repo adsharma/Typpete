@@ -1,4 +1,6 @@
 from abc import ABCMeta, abstractmethod
+
+
 class Aexp(metaclass=ABCMeta):
     @abstractmethod
     def eval(self, env):
@@ -10,7 +12,7 @@ class IntAexp(Aexp):
         self.i = i
 
     def __repr__(self):
-        return 'IntAexp(%d)' % self.i
+        return "IntAexp(%d)" % self.i
 
     def eval(self, env):
         return self.i
@@ -21,7 +23,7 @@ class VarAexp(Aexp):
         self.name = name
 
     def __repr__(self):
-        return 'VarAexp(%s)' % self.name
+        return "VarAexp(%s)" % self.name
 
     def eval(self, env):
         if self.name in env:
@@ -37,25 +39,25 @@ class BinopAexp(Aexp):
         self.right = right
 
     def __repr__(self):
-        return 'BinopAexp(%s, %s, %s)' % (self.op, self.left, self.right)
+        return "BinopAexp(%s, %s, %s)" % (self.op, self.left, self.right)
 
     def eval(self, env):
         left_value = self.left.eval(env)
         right_value = self.right.eval(env)
-        if self.op == '+':
+        if self.op == "+":
             value = left_value + right_value
             return value
-        elif self.op == '-':
+        elif self.op == "-":
             value = left_value - right_value
             return value
-        elif self.op == '*':
+        elif self.op == "*":
             value = left_value * right_value
             return value
-        elif self.op == '/':
+        elif self.op == "/":
             value = left_value / right_value
             return value
         else:
-            raise RuntimeError('unknown operator: ' + self.op)
+            raise RuntimeError("unknown operator: " + self.op)
 
 
 class Bexp:
@@ -69,31 +71,31 @@ class RelopBexp(Bexp):
         self.right = right
 
     def __repr__(self):
-        return 'RelopBexp(%s, %s, %s)' % (self.op, self.left, self.right)
+        return "RelopBexp(%s, %s, %s)" % (self.op, self.left, self.right)
 
     def eval(self, env):
         left_value = self.left.eval(env)
         right_value = self.right.eval(env)
-        if self.op == '<':
+        if self.op == "<":
             value = left_value < right_value
             return value
-        elif self.op == '<=':
+        elif self.op == "<=":
             value = left_value <= right_value
             return value
-        elif self.op == '>':
+        elif self.op == ">":
             value = left_value > right_value
             return value
-        elif self.op == '>=':
+        elif self.op == ">=":
             value = left_value >= right_value
             return value
-        elif self.op == '=':
+        elif self.op == "=":
             value = left_value == right_value
             return value
-        elif self.op == '!=':
+        elif self.op == "!=":
             value = left_value != right_value
             return value
         else:
-            raise RuntimeError('unknown operator: ' + self.op)
+            raise RuntimeError("unknown operator: " + self.op)
 
 
 class AndBexp(Bexp):
@@ -102,7 +104,7 @@ class AndBexp(Bexp):
         self.right = right
 
     def __repr__(self):
-        return 'AndBexp(%s, %s)' % (self.left, self.right)
+        return "AndBexp(%s, %s)" % (self.left, self.right)
 
     def eval(self, env):
         left_value = self.left.eval(env)
@@ -116,7 +118,7 @@ class OrBexp(Bexp):
         self.right = right
 
     def __repr__(self):
-        return 'OrBexp(%s, %s)' % (self.left, self.right)
+        return "OrBexp(%s, %s)" % (self.left, self.right)
 
     def eval(self, env):
         left_value = self.left.eval(env)
@@ -129,7 +131,7 @@ class NotBexp(Bexp):
         self.exp = exp
 
     def __repr__(self):
-        return 'NotBexp(%s)' % self.exp
+        return "NotBexp(%s)" % self.exp
 
     def eval(self, env):
         value = self.exp.eval(env)
@@ -148,7 +150,7 @@ class AssignStatement(Statement):
         self.aexp = aexp
 
     def __repr__(self):
-        return 'AssignStatement(%s, %s)' % (self.name, self.aexp)
+        return "AssignStatement(%s, %s)" % (self.name, self.aexp)
 
     def eval(self, env):
         value = self.aexp.eval(env)
@@ -161,7 +163,7 @@ class CompoundStatement(Statement):
         self.second = second
 
     def __repr__(self):
-        return 'CompoundStatement(%s, %s)' % (self.first, self.second)
+        return "CompoundStatement(%s, %s)" % (self.first, self.second)
 
     def eval(self, env):
         self.first.eval(env)
@@ -175,7 +177,11 @@ class IfStatement(Statement):
         self.false_stmt = false_stmt
 
     def __repr__(self):
-        return 'IfStatement(%s, %s, %s)' % (self.condition, self.true_stmt, self.false_stmt)
+        return "IfStatement(%s, %s, %s)" % (
+            self.condition,
+            self.true_stmt,
+            self.false_stmt,
+        )
 
     def eval(self, env):
         condition_value = self.condition.eval(env)
@@ -192,7 +198,7 @@ class WhileStatement(Statement):
         self.body = body
 
     def __repr__(self):
-        return 'WhileStatement(%s, %s)' % (self.condition, self.body)
+        return "WhileStatement(%s, %s)" % (self.condition, self.body)
 
     def eval(self, env):
         condition_value = self.condition.eval(env)
@@ -207,14 +213,14 @@ while x < 10:
     x = x + 1
 """
 env = dict()
-x = VarAexp('x')
+x = VarAexp("x")
 z = IntAexp(0)
-i = AssignStatement('x', z)
+i = AssignStatement("x", z)
 t = IntAexp(10)
-c = RelopBexp('<', x, t)
+c = RelopBexp("<", x, t)
 o = IntAexp(1)
-r = BinopAexp('+', x, o)
-a = AssignStatement('x', r)
+r = BinopAexp("+", x, o)
+a = AssignStatement("x", r)
 w = WhileStatement(c, a)
 p = CompoundStatement(i, w)
 p.eval(env)

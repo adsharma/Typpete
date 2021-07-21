@@ -37,7 +37,7 @@ MAX_HOPBYHOP_EXT = 3
 LINE_LEN = 8
 
 #: Generated files directory
-GEN_PATH = 'gen'
+GEN_PATH = "gen"
 #: Topology configuration
 TOPO_FILE = "topology.yml"
 #: AS configuration

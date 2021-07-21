@@ -1,4 +1,3 @@
-
 def f1(x):
     u = x[0]
     v = x * 3
@@ -55,4 +54,3 @@ h = b[g]
 # f4 := Callable[[Dict[str, int], int], int]
 # f5 := Callable[[List[int], Dict[str, int], int], int]
 # f6 := Callable[[Dict[str, int]], int]
-

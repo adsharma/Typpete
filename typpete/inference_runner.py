@@ -17,32 +17,31 @@ def configure_inference(args):
     for flag_name in vars(args):
         flag_value = getattr(args, flag_name)
         # func_type_params=make_object,1,d,2
-        if flag_name == 'func_type_params':
+        if flag_name == "func_type_params":
             if func_type_params is None or flag_value == "":
                 func_type_params = {}
             else:
-                flag_value = flag_value.split(',')
+                flag_value = flag_value.split(",")
                 for i in range(0, len(flag_value), 2):
                     func_name = flag_value[i]
                     count = int(flag_value[i + 1])
-                    type_vars = ['{}{}'.format(func_name, i) for i in range(count)]
+                    type_vars = ["{}{}".format(func_name, i) for i in range(count)]
                     func_type_params[func_name] = type_vars
-        elif flag_name == 'class_type_params':
+        elif flag_name == "class_type_params":
             if class_type_params is None or flag_value == "":
                 class_type_params = {}
             else:
-                flag_value = flag_value.split(',')
+                flag_value = flag_value.split(",")
                 for i in range(0, len(flag_value), 2):
                     cls_name = flag_value[i]
                     count = int(flag_value[i + 1])
-                    type_vars = ['{}{}'.format(cls_name, i) for i in range(count)]
+                    type_vars = ["{}{}".format(cls_name, i) for i in range(count)]
                     class_type_params[cls_name] = type_vars
         elif flag_name in config.config:
-            config.config[flag_name] = flag_value == 'True'
+            config.config[flag_name] = flag_value == "True"
         else:
             print("Invalid flag {}. Ignoring.".format(flag_name))
     return class_type_params, func_type_params
-
 
 
 def run_inference(args, file_path: Path, base_folder: Path):
@@ -50,13 +49,17 @@ def run_inference(args, file_path: Path, base_folder: Path):
     class_type_params, func_type_params = configure_inference(args)
 
     if not base_folder:
-        base_folder = Path('')
+        base_folder = Path("")
 
     file_name = file_path.stem
     t = ImportHandler.get_module_ast(file_name, base_folder)
 
-    solver = z3_types.TypesSolver(t, base_folder=base_folder, type_params=func_type_params,
-                                  class_type_params=class_type_params)
+    solver = z3_types.TypesSolver(
+        t,
+        base_folder=base_folder,
+        type_params=func_type_params,
+        class_type_params=class_type_params,
+    )
 
     context = Context(t, t.body, solver)
     context.type_params = solver.config.type_params
@@ -71,7 +74,7 @@ def run_inference(args, file_path: Path, base_folder: Path):
     print("Constraints collection took  {}s".format(end_time - start_time))
 
     start_time = time.time()
-    if config.config['enable_soft_constraints']:
+    if config.config["enable_soft_constraints"]:
         check = solver.optimize.check()
     else:
         check = solver.check(solver.assertions_vars)
@@ -83,7 +86,9 @@ def run_inference(args, file_path: Path, base_folder: Path):
     # TODO: Use pathlib for rest of the code below
     write_path = str(write_path)
 
-    file = open(write_path + '/{}_constraints_log.txt'.format(file_name.replace('/', '.')), 'w')
+    file = open(
+        write_path + "/{}_constraints_log.txt".format(file_name.replace("/", ".")), "w"
+    )
     file.write(print_solver(solver))
     file.close()
 
@@ -91,17 +96,17 @@ def run_inference(args, file_path: Path, base_folder: Path):
         print("Check: unsat")
         if config.config["print_unsat_core"]:
             print("Writing unsat core to {}".format(write_path))
-            if config.config['enable_soft_constraints']:
+            if config.config["enable_soft_constraints"]:
                 solver.check(solver.assertions_vars)
                 core = solver.unsat_core()
             else:
                 core = solver.unsat_core()
-            core_string = '\n'.join(solver.assertions_errors[c] for c in core)
-            file = open(write_path + '/{}_unsat_core.txt'.format(file_name), 'w')
+            core_string = "\n".join(solver.assertions_errors[c] for c in core)
+            file = open(write_path + "/{}_unsat_core.txt".format(file_name), "w")
             file.write(core_string)
             file.close()
             model = None
-            
+
             opt = Optimize(solver.ctx)
             for av in solver.assertions_vars:
                 opt.add_soft(av)
@@ -144,7 +149,7 @@ def run_inference(args, file_path: Path, base_folder: Path):
                     print("Unsat:")
                     print(solver.assertions_errors[av])
     else:
-        if config.config['enable_soft_constraints']:
+        if config.config["enable_soft_constraints"]:
             model = solver.optimize.model()
         else:
             model = solver.model()
@@ -154,23 +159,24 @@ def run_inference(args, file_path: Path, base_folder: Path):
         context.generate_typed_ast(model, solver)
         ImportHandler.add_required_imports(file_name, t, context)
 
-        write_path += '/' + file_name + '.py'
+        write_path += "/" + file_name + ".py"
 
         if not os.path.exists(os.path.dirname(write_path)):
             os.makedirs(os.path.dirname(write_path))
-        file = open(write_path, 'w')
+        file = open(write_path, "w")
         file.write(astunparse.unparse(t))
         file.close()
 
         ImportHandler.write_to_files(model, solver)
 
+
 def print_solver(z3solver):
     printer = z3_types.z3printer
-    printer.set_pp_option('max_lines', 4000)
-    printer.set_pp_option('max_width', 1000)
-    printer.set_pp_option('max_visited', 10000000)
-    printer.set_pp_option('max_depth', 1000000)
-    printer.set_pp_option('max_args', 512)
+    printer.set_pp_option("max_lines", 4000)
+    printer.set_pp_option("max_width", 1000)
+    printer.set_pp_option("max_visited", 10000000)
+    printer.set_pp_option("max_depth", 1000000)
+    printer.set_pp_option("max_args", 512)
     return str(z3solver)
 
 
@@ -195,6 +201,7 @@ def print_context(ctx, model, ind=""):
             print_context(child, model, "\t" + ind)
     if not ind and children:
         print("---------------------------")
+
 
 def main():
     parser = argparse.ArgumentParser(description="Static type inference for Python 3")
@@ -247,5 +254,6 @@ def main():
     else:
         parser.print_help()
 
-if __name__ == '__main__':
+
+if __name__ == "__main__":
     main()

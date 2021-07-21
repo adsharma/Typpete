@@ -34,6 +34,7 @@ from typing import cast, Dict, List, Optional, Tuple
 
 class PathPolicy(object):
     """Stores a path policy."""
+
     def __init__(self):  # pragma: no cover
         self.best_set_size = 5
         self.candidates_set_size = 20
@@ -44,18 +45,16 @@ class PathPolicy(object):
         self.property_ranges = {}
         self.property_weights = {}
 
-
-
     def get_path_policy_dict(self):  # pragma: no cover
         return {
-            'best_set_size': self.best_set_size,
-            'candidates_set_size': self.candidates_set_size,
-            'history_limit': self.history_limit,
-            'update_after_number': self.update_after_number,
-            'update_after_time': self.update_after_time,
-            'unwanted_ases': self.unwanted_ases,
-            'property_ranges': self.property_ranges,
-            'property_weights': self.property_weights
+            "best_set_size": self.best_set_size,
+            "candidates_set_size": self.candidates_set_size,
+            "history_limit": self.history_limit,
+            "update_after_number": self.update_after_number,
+            "update_after_time": self.update_after_time,
+            "unwanted_ases": self.unwanted_ases,
+            "property_ranges": self.property_ranges,
+            "property_weights": self.property_weights,
         }
 
     def check_filters(self, pcb):
@@ -71,18 +70,21 @@ class PathPolicy(object):
         assert isinstance(pcb, PathSegment)
         isd_as = self._check_unwanted_ases(pcb)
         if isd_as:
-            logging.warning("PathStore: pcb discarded, unwanted AS(%s): %s",
-                            isd_as, pcb.short_desc())
+            logging.warning(
+                "PathStore: pcb discarded, unwanted AS(%s): %s",
+                isd_as,
+                pcb.short_desc(),
+            )
             return False
         reasons = self._check_property_ranges(pcb)
         if reasons:
-            logging.info("PathStore: pcb discarded(%s): %s",
-                         ", ".join(reasons), pcb.short_desc())
+            logging.info(
+                "PathStore: pcb discarded(%s): %s", ", ".join(reasons), pcb.short_desc()
+            )
             return False
         ia = self._check_remote_ifid(pcb)
         if ia:
-            logging.error("PathStore: pcb discarded, remote IFID of %s unknown",
-                          ia)
+            logging.error("PathStore: pcb discarded, remote IFID of %s unknown", ia)
             return False
         return True
 
@@ -98,14 +100,15 @@ class PathPolicy(object):
             if isd_as in self.unwanted_ases:
                 return isd_as
 
-    def _check_range(self, reasons, name, actual):  # CHANGE: Moved nested function out of
-                                                    # method _check_property_ranges
+    def _check_range(
+        self, reasons, name, actual
+    ):  # CHANGE: Moved nested function out of
+        # method _check_property_ranges
         range_ = self.property_ranges[name]
         if not range_:
             return
-        if (actual < range_[0] or actual > range_[1]):
-            reasons.append("%s: %d <= %d <= %d" % (
-                name, range_[0], actual, range_[1]))
+        if actual < range_[0] or actual > range_[1]:
+            reasons.append("%s: %d <= %d <= %d" % (name, range_[0], actual, range_[1]))
 
     def _check_property_ranges(self, pcb):
         """
@@ -117,10 +120,15 @@ class PathPolicy(object):
         """
 
         reasons = []
-        self._check_range(reasons, "PeerLinks", pcb.get_n_peer_links())  # CHANGE: Adapted
-        self._check_range(reasons, "HopsLength", pcb.get_n_hops())       # calls to nested
-        self._check_range(reasons, "DelayTime",                          # function.
-                          int(SCIONTime.get_time()) - pcb.get_timestamp())
+        self._check_range(
+            reasons, "PeerLinks", pcb.get_n_peer_links()
+        )  # CHANGE: Adapted
+        self._check_range(reasons, "HopsLength", pcb.get_n_hops())  # calls to nested
+        self._check_range(
+            reasons,
+            "DelayTime",  # function.
+            int(SCIONTime.get_time()) - pcb.get_timestamp(),
+        )
         self._check_range(reasons, "GuaranteedBandwidth", 10)
         self._check_range(reasons, "AvailableBandwidth", 10)
         self._check_range(reasons, "TotalBandwidth", 10)
@@ -143,7 +151,7 @@ class PathPolicy(object):
                     return pcbm.outIA()
         return None
 
-    @staticmethod   # CHANGE: Turned classmethod into staticmethod
+    @staticmethod  # CHANGE: Turned classmethod into staticmethod
     def from_file(policy_file):  # pragma: no cover
         """
         Create a PathPolicy instance from the file.
@@ -152,7 +160,7 @@ class PathPolicy(object):
         """
         return PathPolicy.from_dict(load_yaml_file(policy_file))
 
-    @staticmethod   # CHANGE: Turned classmethod into staticmethod
+    @staticmethod  # CHANGE: Turned classmethod into staticmethod
     def from_dict(policy_dict):  # pragma: no cover
         """
         Create a PathPolicy instance from the dictionary.
@@ -169,20 +177,25 @@ class PathPolicy(object):
 
         :param dict path_policy: path policy.
         """
-        self.best_set_size = cast(int, path_policy['BestSetSize'])  # CHANGE: added casts
-        self.candidates_set_size = cast(int, path_policy['CandidatesSetSize'])
-        self.history_limit = cast(int, path_policy['HistoryLimit'])
-        self.update_after_number = cast(int, path_policy['UpdateAfterNumber'])
-        self.update_after_time = cast(int, path_policy['UpdateAfterTime'])
-        unwanted_ases = cast(str, path_policy['UnwantedASes']).split(',')
+        self.best_set_size = cast(
+            int, path_policy["BestSetSize"]
+        )  # CHANGE: added casts
+        self.candidates_set_size = cast(int, path_policy["CandidatesSetSize"])
+        self.history_limit = cast(int, path_policy["HistoryLimit"])
+        self.update_after_number = cast(int, path_policy["UpdateAfterNumber"])
+        self.update_after_time = cast(int, path_policy["UpdateAfterTime"])
+        unwanted_ases = cast(str, path_policy["UnwantedASes"]).split(",")
         for unwanted in unwanted_ases:
             self.unwanted_ases.append(ISD_AS(unwanted))
-        property_ranges = cast(Dict[str, str], path_policy['PropertyRanges'])
+        property_ranges = cast(Dict[str, str], path_policy["PropertyRanges"])
         for key in property_ranges:
-            property_range = property_ranges[key].split('-')
-            property_range_temp = int(property_range[0]), int(property_range[1])  # CHANGE: Added local variable b/c variable changed type.
+            property_range = property_ranges[key].split("-")
+            property_range_temp = (
+                int(property_range[0]),
+                int(property_range[1]),
+            )  # CHANGE: Added local variable b/c variable changed type.
             self.property_ranges[key] = property_range_temp
-        self.property_weights = cast(Dict[str, int], path_policy['PropertyWeights'])
+        self.property_weights = cast(Dict[str, int], path_policy["PropertyWeights"])
 
     def __str__(self):
         path_policy_dict = self.get_path_policy_dict()
@@ -219,6 +232,7 @@ class PathStoreRecord(object):
     :ivar int available_bandwidth: the path segment's available bandwidth.
     :ivar int total_bandwidth: the path segment's total bandwidth.
     """
+
     DEFAULT_OFFSET = 3600 * 24 * 7  # 1 week
 
     def __init__(self, pcb):
@@ -236,7 +250,7 @@ class PathStoreRecord(object):
         self.guaranteed_bandwidth = 0
         self.available_bandwidth = 0
         self.total_bandwidth = 0
-        self.last_seen_time = -1    # CHANGE: Added attribute assignment to constructor
+        self.last_seen_time = -1  # CHANGE: Added attribute assignment to constructor
         self.update(pcb)
 
     def update(self, pcb):
@@ -265,27 +279,37 @@ class PathStoreRecord(object):
         """
         self.fidelity = 0
         now = SCIONTime.get_time()
-        self.fidelity += (path_policy.property_weights['PeerLinks'] *
-                          self.peer_links)
-        self.fidelity += (path_policy.property_weights['HopsLength'] /
-                          self.hops_length)
-        self.fidelity += (path_policy.property_weights['Disjointness'] *
-                          self.disjointness)
+        self.fidelity += path_policy.property_weights["PeerLinks"] * self.peer_links
+        self.fidelity += path_policy.property_weights["HopsLength"] / self.hops_length
+        self.fidelity += (
+            path_policy.property_weights["Disjointness"] * self.disjointness
+        )
         if now != 0:
-            self.fidelity += (path_policy.property_weights['LastSentTime'] *
-                              (now - self.last_sent_time) / now)
-            self.fidelity += (path_policy.property_weights['LastSeenTime'] *
-                              self.last_seen_time / now)
-        self.fidelity += (path_policy.property_weights['DelayTime'] /
-                          self.delay_time)
-        self.fidelity += (path_policy.property_weights['ExpirationTime'] *
-                          (self.expiration_time - now) / self.expiration_time)
-        self.fidelity += (path_policy.property_weights['GuaranteedBandwidth'] *
-                          self.guaranteed_bandwidth)
-        self.fidelity += (path_policy.property_weights['AvailableBandwidth'] *
-                          self.available_bandwidth)
-        self.fidelity += (path_policy.property_weights['TotalBandwidth'] *
-                          self.total_bandwidth)
+            self.fidelity += (
+                path_policy.property_weights["LastSentTime"]
+                * (now - self.last_sent_time)
+                / now
+            )
+            self.fidelity += (
+                path_policy.property_weights["LastSeenTime"] * self.last_seen_time / now
+            )
+        self.fidelity += path_policy.property_weights["DelayTime"] / self.delay_time
+        self.fidelity += (
+            path_policy.property_weights["ExpirationTime"]
+            * (self.expiration_time - now)
+            / self.expiration_time
+        )
+        self.fidelity += (
+            path_policy.property_weights["GuaranteedBandwidth"]
+            * self.guaranteed_bandwidth
+        )
+        self.fidelity += (
+            path_policy.property_weights["AvailableBandwidth"]
+            * self.available_bandwidth
+        )
+        self.fidelity += (
+            path_policy.property_weights["TotalBandwidth"] * self.total_bandwidth
+        )
 
     def __eq__(self, other):  # pragma: no cover
         if type(other) is not type(self):
@@ -293,20 +317,22 @@ class PathStoreRecord(object):
         return self.id == other.id
 
     def __str__(self):
-        return "PathStoreRecord: ID: %s Fidelity: %s" % (
-            self.id, self.fidelity)
+        return "PathStoreRecord: ID: %s Fidelity: %s" % (self.id, self.fidelity)
 
 
 class PathStore(object):
     """Path Store class."""
+
     def __init__(self, path_policy):  # pragma: no cover
         """
         :param dict path_policy: path policy.
         """
         self.path_policy = path_policy
         self.candidates = []
-        self.best_paths_history = deque(self.path_policy.history_limit)  # CHANGE: changed kw arg to normal arg
-        self.disjointness = defaultdict(lambda : float())  # CHANGE: Added lambda
+        self.best_paths_history = deque(
+            self.path_policy.history_limit
+        )  # CHANGE: changed kw arg to normal arg
+        self.disjointness = defaultdict(lambda: float())  # CHANGE: Added lambda
         self.last_dj_update = 0
 
     def add_segment(self, pcb):
@@ -355,8 +381,7 @@ class PathStore(object):
             self._remove_expired_segments()
         if len(self.candidates) > self.path_policy.candidates_set_size:
             self._update_all_fidelity()
-            self.candidates = sorted(self.candidates, lambda x: x.fidelity,
-                                     True)[:-1]
+            self.candidates = sorted(self.candidates, lambda x: x.fidelity, True)[:-1]
 
     def _update_disjointness_db(self):
         """
@@ -402,10 +427,10 @@ class PathStore(object):
                 test_isdas = asm.isd_as()
                 test_index = asm.isd_as()[1]
                 as_disjointness += self.disjointness[asm.isd_as()[1]]
-                if_disjointness += self.disjointness[
-                    asm.pcbm(0).hof().egress_if]
-            candidate.disjointness = (path_disjointness + as_disjointness +
-                                      if_disjointness)
+                if_disjointness += self.disjointness[asm.pcbm(0).hof().egress_if]
+            candidate.disjointness = (
+                path_disjointness + as_disjointness + if_disjointness
+            )
             if candidate.disjointness > max_disjointness:
                 max_disjointness = candidate.disjointness
         if max_disjointness > 0.0:
@@ -416,8 +441,9 @@ class PathStore(object):
         """Update the delay time property of all path candidates."""
         max_delay_time = 0
         for candidate in self.candidates:
-            candidate.delay_time = (candidate.last_seen_time -
-                                    candidate.pcb.get_timestamp() + 1)
+            candidate.delay_time = (
+                candidate.last_seen_time - candidate.pcb.get_timestamp() + 1
+            )
             if candidate.delay_time > max_delay_time:
                 max_delay_time = candidate.delay_time
         for candidate in self.candidates:
@@ -449,8 +475,9 @@ class PathStore(object):
             k = self.path_policy.best_set_size
         self._remove_expired_segments()
         self._update_all_fidelity()
-        best_candidates = heapq.nlargest(k, self.candidates,
-                                         lambda y: y.fidelity)  # CHANGE: Turned kw arg into regular arg.
+        best_candidates = heapq.nlargest(
+            k, self.candidates, lambda y: y.fidelity
+        )  # CHANGE: Turned kw arg into regular arg.
         if sending:
             for candidate in best_candidates:
                 candidate.sending()
@@ -488,8 +515,9 @@ class PathStore(object):
         self.candidates[:] = [c for c in self.candidates if c.id not in rec_ids]
         if self.candidates:
             self._update_all_fidelity()
-            self.candidates = sorted(self.candidates, key=lambda x: x.fidelity,
-                                     reverse=True)
+            self.candidates = sorted(
+                self.candidates, key=lambda x: x.fidelity, reverse=True
+            )
 
     def get_segment(self, rec_id):
         """

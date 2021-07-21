@@ -14,7 +14,16 @@ class Context:
         types_map ({str, Type}): a dict mapping variable names to their inferred types.
     """
 
-    def __init__(self, node, context_nodes, solver, name="", parent_context=None, is_class=False, is_func=False):
+    def __init__(
+        self,
+        node,
+        context_nodes,
+        solver,
+        name="",
+        parent_context=None,
+        is_class=False,
+        is_func=False,
+    ):
         """
         
         :param context_nodes: The AST nodes that belong to this scope. Used to pre-store all class types in the scope. 
@@ -68,16 +77,18 @@ class Context:
     def add_nodes(self, context_nodes, solver):
         # Store all the class types that appear in this context. This enables using
         # classes in no specific order.
-        class_names = [node.name for node in context_nodes if
-                       isinstance(node, ast.ClassDef)]
+        class_names = [
+            node.name for node in context_nodes if isinstance(node, ast.ClassDef)
+        ]
         for cls in class_names:
             if cls in solver.z3_types.all_types:
                 cls_type = solver.z3_types.all_types[cls]
                 self.types_map[cls] = cls_type
 
         # Similarly, store function types that appear in this context
-        func_names = [node.name for node in context_nodes if
-                      isinstance(node, ast.FunctionDef)]
+        func_names = [
+            node.name for node in context_nodes if isinstance(node, ast.FunctionDef)
+        ]
         for func in func_names:
             func_type = solver.new_z3_const("func")
             self.types_map[func] = func_type
@@ -141,9 +152,9 @@ class Context:
         raise NameError("Name {} is not defined".format(var_name))
 
     def should_remove(self, node):
-        if hasattr(node, 'super') and node.super != self.name:
+        if hasattr(node, "super") and node.super != self.name:
             return True
-        if hasattr(node, 'remove_later') and node.remove_later:
+        if hasattr(node, "remove_later") and node.remove_later:
             return True
         return False
 
@@ -176,31 +187,36 @@ class Context:
                     args = []
                     for name in solver.z3_types.config.class_type_params[cls.name]:
                         real_name = str(name)
-                        z3_name = 'tv' + real_name
+                        z3_name = "tv" + real_name
                         tvar_lit = getattr(solver.z3_types.type_sort, z3_name)
                         if z3_name not in self.used_type_vars:
                             upper = solver.z3_types.upper(tvar_lit)
                             upper = solver.annotation_resolver.unparse_annotation(
-                                model.evaluate(upper))
+                                model.evaluate(upper)
+                            )
                             self.used_type_vars[z3_name] = upper
                         if real_name[0].isdigit():
-                            real_name = 'T' + real_name
+                            real_name = "T" + real_name
                         args.append(ast.Name(id=real_name))
                     if len(args) == 1:
                         slice = ast.Index(value=args[0])
                     else:
                         slice = ast.Index(ast.Tuple(elts=args))
-                    cls.bases.append(ast.Subscript(value=ast.Name(id='Generic'), slice=slice))
+                    cls.bases.append(
+                        ast.Subscript(value=ast.Name(id="Generic"), slice=slice)
+                    )
 
     def add_type_var_assigns(self, model, solver):
         if isinstance(self.node, ast.Module):
             after_imports = 0
-            while after_imports < len(self.node.body) and isinstance(self.node.body[after_imports], (ast.Import, ast.ImportFrom)):
+            while after_imports < len(self.node.body) and isinstance(
+                self.node.body[after_imports], (ast.Import, ast.ImportFrom)
+            ):
                 after_imports += 1
             for tv, upper in self.used_type_vars.items():
                 tv_name = tv[2:]
                 if tv_name[0].isdigit():
-                    tv_name = 'T' + tv_name
+                    tv_name = "T" + tv_name
                 tv_decl = self._create_type_var_assign(tv_name, upper)
                 self.node.body.insert(after_imports, tv_decl)
                 after_imports += 1
@@ -211,7 +227,7 @@ class Context:
         name_str = ast.Str(s=name)
         bound_name = ast.Name(id=upper)
         upper_kw = ast.keyword(arg="bound", value=bound_name)
-        value = ast.Call(func=tv_func,args=[name_str], keywords=[upper_kw])
+        value = ast.Call(func=tv_func, args=[name_str], keywords=[upper_kw])
         res = ast.Assign(targets=[target], value=value)
         return res
 
@@ -225,42 +241,65 @@ class Context:
             func_len = len(node.args.args)
             if inferred_type_name.startswith("generic"):
                 nargs = int(inferred_type_name[7:8])
-                arg_accessor_func = lambda i, n: lambda x: getattr(type_sort, "func_{}_arg_{}".format(n, i))(getattr(type_sort, 'generic{}_func'.format(nargs))(x))
-                return_accessor_func = lambda n: lambda x: getattr(type_sort, "func_{}_return".format(n))(getattr(type_sort, 'generic{}_func'.format(nargs))(x))
+                arg_accessor_func = lambda i, n: lambda x: getattr(
+                    type_sort, "func_{}_arg_{}".format(n, i)
+                )(getattr(type_sort, "generic{}_func".format(nargs))(x))
+                return_accessor_func = lambda n: lambda x: getattr(
+                    type_sort, "func_{}_return".format(n)
+                )(getattr(type_sort, "generic{}_func".format(nargs))(x))
                 for arg in range(1, nargs + 1):
-                    tvar_lit = simplify(getattr(type_sort, inferred_type_name[:8] + '_tv' + str(arg))(inferred_type))
+                    tvar_lit = simplify(
+                        getattr(type_sort, inferred_type_name[:8] + "_tv" + str(arg))(
+                            inferred_type
+                        )
+                    )
                     tvar = str(tvar_lit)
                     if tvar not in self.used_type_vars:
                         upper = solver.z3_types.upper(tvar_lit)
-                        upper = solver.annotation_resolver.unparse_annotation(model.evaluate(upper))
+                        upper = solver.annotation_resolver.unparse_annotation(
+                            model.evaluate(upper)
+                        )
                         self.used_type_vars[tvar] = upper
 
             else:
-                arg_accessor_func = lambda i, n: getattr(type_sort, "func_{}_arg_{}".format(n, i))
-                return_accessor_func = lambda n: getattr(type_sort, "func_{}_return".format(n))
+                arg_accessor_func = lambda i, n: getattr(
+                    type_sort, "func_{}_arg_{}".format(n, i)
+                )
+                return_accessor_func = lambda n: getattr(
+                    type_sort, "func_{}_return".format(n)
+                )
 
             # Add the type annotations for the function arguments
             for i, arg in enumerate(node.args.args):
                 arg_type = simplify(arg_accessor_func(i + 1, func_len)(inferred_type))
 
                 # Get the annotation with PEP 484 syntax
-                arg_annotation_str = solver.annotation_resolver.unparse_annotation(arg_type, self.name,
-                                                                                   node.lineno, self.definition_linenos)
+                arg_annotation_str = solver.annotation_resolver.unparse_annotation(
+                    arg_type, self.name, node.lineno, self.definition_linenos
+                )
                 # Add the type annotation as an AST node
                 arg.annotation = ast.parse(arg_annotation_str).body[0].value
 
-                names = {name.id for name in list(ast.walk(arg.annotation)) if isinstance(name, ast.Name)}
+                names = {
+                    name.id
+                    for name in list(ast.walk(arg.annotation))
+                    if isinstance(name, ast.Name)
+                }
                 self.imports |= names
 
             # Similarly, add the return type annotation
             return_type = simplify(return_accessor_func(func_len)(inferred_type))
-            return_annotation_str = solver.annotation_resolver.unparse_annotation(return_type, self.name,
-                                                                                  node.lineno, self.definition_linenos)
+            return_annotation_str = solver.annotation_resolver.unparse_annotation(
+                return_type, self.name, node.lineno, self.definition_linenos
+            )
             node.returns = ast.parse(return_annotation_str).body[0].value
 
-            names = {name.id for name in list(ast.walk(node.returns)) if isinstance(name, ast.Name)}
+            names = {
+                name.id
+                for name in list(ast.walk(node.returns))
+                if isinstance(name, ast.Name)
+            }
             self.imports |= names
-
 
         # Add the type annotations for functions in children contexts
         for child in self.children_contexts:
@@ -276,8 +315,11 @@ class Context:
     def add_annotation_to_assignments(self, model, solver):
         """Add a type comment for every assignment statement in the context"""
         for node, z3_t in self.assignments:
-            if (len(node.targets) == 1
-               and sys.version_info[0] >= 3 and sys.version_info[1] >= 6):
+            if (
+                len(node.targets) == 1
+                and sys.version_info[0] >= 3
+                and sys.version_info[1] >= 6
+            ):
                 # Replace the normal assignment node with annotated assignment
                 # Annotated assignment only supports single assignment (no tuples or lists)
                 # To unparse the assignment statement into the new syntax of the variable annotation,
@@ -286,8 +328,14 @@ class Context:
                 if isinstance(node.targets[0], ast.Tuple):
                     try:
                         # Unfold tuple assignment
-                        assigns = self.get_unfolded_assignments(node.targets[0], node.value, z3_t, model, solver,
-                                                                self.definition_linenos)
+                        assigns = self.get_unfolded_assignments(
+                            node.targets[0],
+                            node.value,
+                            z3_t,
+                            model,
+                            solver,
+                            self.definition_linenos,
+                        )
                         if not assigns or node not in self.context_nodes:
                             continue
                         idx = self.context_nodes.index(node)
@@ -304,11 +352,16 @@ class Context:
                 node.__class__ = ast.AnnAssign
                 node.target = node.targets[0]
                 node.simple = 1
-                annotation_str = solver.annotation_resolver.unparse_annotation(z3_t, self.name,
-                                                                               node.lineno, self.definition_linenos)
+                annotation_str = solver.annotation_resolver.unparse_annotation(
+                    z3_t, self.name, node.lineno, self.definition_linenos
+                )
                 node.annotation = ast.parse(annotation_str).body[0].value
 
-                names = {name.id for name in list(ast.walk(node.annotation)) if isinstance(name, ast.Name)}
+                names = {
+                    name.id
+                    for name in list(ast.walk(node.annotation))
+                    if isinstance(name, ast.Name)
+                }
                 self.imports |= names
 
         # Add the type comment for assignments in children contexts
@@ -349,7 +402,9 @@ class Context:
                 return child
         raise NameError("Context {} is not defined".format(context_name))
 
-    def get_unfolded_assignments(self, node, value, z3_t, model, solver, definition_linenos):
+    def get_unfolded_assignments(
+        self, node, value, z3_t, model, solver, definition_linenos
+    ):
         """
         Unfold tuple assignments to multiple single assignment, only if both sides are a tuple
 
@@ -364,19 +419,25 @@ class Context:
         if isinstance(node, ast.Tuple):
             if not isinstance(value, ast.Tuple):
                 # Ride hand side is not a tuple
-                return [ast.Assign(
-                    targets=[node],
-                    value=value
-                )]
+                return [ast.Assign(targets=[node], value=value)]
 
             # deeply unfold the tuple
             tuple_len = len(node.elts)
             nodes = []
             for i in range(tuple_len):
-                arg_accessor = getattr(solver.z3_types.type_sort, "tuple_{}_arg_{}".format(tuple_len, i + 1))
+                arg_accessor = getattr(
+                    solver.z3_types.type_sort,
+                    "tuple_{}_arg_{}".format(tuple_len, i + 1),
+                )
                 arg_z3_t = arg_accessor(z3_t)
-                cur = self.get_unfolded_assignments(node.elts[i], value.elts[i], arg_z3_t, model, solver,
-                                                    definition_linenos)
+                cur = self.get_unfolded_assignments(
+                    node.elts[i],
+                    value.elts[i],
+                    arg_z3_t,
+                    model,
+                    solver,
+                    definition_linenos,
+                )
                 nodes += cur
             return nodes
 
@@ -384,22 +445,17 @@ class Context:
             # Return a single annotated assignment
             z3_t = simplify(z3_t)
             z3_t = model[z3_t] if model[z3_t] is not None else z3_t
-            annotation_str = solver.annotation_resolver.unparse_annotation(z3_t, self.name,
-                                                                           node.lineno, self.definition_linenos)
+            annotation_str = solver.annotation_resolver.unparse_annotation(
+                z3_t, self.name, node.lineno, self.definition_linenos
+            )
             annotation = ast.parse(annotation_str).body[0].value
             node = ast.AnnAssign(
-                target=node,
-                value=value,
-                annotation=annotation,
-                simple=1
+                target=node, value=value, annotation=annotation, simple=1
             )
             return [node]
         else:
             # Non name/attribute assignments cannot be annotated. Return a single normal assignment.
-            return [ast.Assign(
-                targets=[node],
-                value=value
-            )]
+            return [ast.Assign(targets=[node], value=value)]
 
 
 class AnnotatedFunction:

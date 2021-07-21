@@ -1,14 +1,14 @@
 class Pin:
     def __init__(self, code, high=False, chip=None, output=False):
-        self.code = code.replace('~', '')
+        self.code = code.replace("~", "")
         self.high = high
         self.chip = chip
         self.output = output
-        self.low_means_enabled = code.startswith('~')
+        self.low_means_enabled = code.startswith("~")
         self.wires = set()
 
     def __str__(self):
-        return '{}/{}'.format(self.code, 'H' if self.ishigh() else 'L')
+        return "{}/{}".format(self.code, "H" if self.ishigh() else "L")
 
     def ishigh(self):
         if not self.output and self.wires:
@@ -20,7 +20,8 @@ class Pin:
     def propagate_to(self):
         if self.output:
             return {
-                p.chip for p in self.wires
+                p.chip
+                for p in self.wires
                 if not p.output and p.chip is not self and p.chip is not None
             }
         else:
@@ -65,6 +66,7 @@ class Pin:
         if self.chip:
             self.chip.update()
 
+
 def pinrange(prefix, start, end):
     # pinrange('Y', 0, 3) -> ['Y0', 'Y1', 'Y2', 'Y3']
-    return [prefix + str(i) for i in range(start, end+1)]
+    return [prefix + str(i) for i in range(start, end + 1)]

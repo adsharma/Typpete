@@ -19,7 +19,8 @@ def count(s: str, str: str) -> int:
     """Counts how many times str occurs in string"""
     pass
 
-def format(self: str, arg1: object = '', arg2: object = '', arg3: object = '') -> str:
+
+def format(self: str, arg1: object = "", arg2: object = "", arg3: object = "") -> str:
     """
     Return a formatted version of S, using substitutions from args and kwargs.
         The substitutions are identified by braces ('{' and '}').
@@ -27,7 +28,9 @@ def format(self: str, arg1: object = '', arg2: object = '', arg3: object = '') -
     pass
 
 
-def format(s: str, arg1: object = '', arg2: object = '', arg3: object = '', arg4: object = '') -> str:
+def format(
+    s: str, arg1: object = "", arg2: object = "", arg3: object = "", arg4: object = ""
+) -> str:
     """
     Return a formatted version of S, using substitutions from args and kwargs.
         The substitutions are identified by braces ('{' and '}').
@@ -90,7 +93,7 @@ def lower(s: str) -> str:
     pass
 
 
-def ljust(s: str, w: int, fill: str = ' ') -> str:
+def ljust(s: str, w: int, fill: str = " ") -> str:
     """Return the string `s` left justified in a string of length `w`.
     Padding is done using the specified fillchar `fill` (default is a space)."""
     pass
@@ -106,7 +109,7 @@ def replace(s: str, old: str, new: str) -> str:
     pass
 
 
-def rjust(s: str, w: int, fill: str = ' ') -> str:
+def rjust(s: str, w: int, fill: str = " ") -> str:
     """Return the string `s` right justified in a string of length `w`.
     Padding is done using the specified fillchar `fill` (default is a space)."""
     pass
@@ -117,9 +120,10 @@ def rstrip(s: str) -> str:
     pass
 
 
-def split(s: str, sep: str = '', maxsplit: int = -1) -> List[str]:
+def split(s: str, sep: str = "", maxsplit: int = -1) -> List[str]:
     """Splits string according to delimiter str and returns list of substrings"""
     pass
+
 
 def startswith(s: str, c: str) -> bool:
     """"""

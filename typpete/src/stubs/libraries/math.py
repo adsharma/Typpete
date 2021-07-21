@@ -80,7 +80,9 @@ def ceil(x: float) -> int:  # real signature unknown; restored from __doc__
     pass
 
 
-def copysign(x: float, y: float) -> float:  # real signature unknown; restored from __doc__
+def copysign(
+    x: float, y: float
+) -> float:  # real signature unknown; restored from __doc__
     """
     copysign(x, y)
 
@@ -192,7 +194,9 @@ def fmod(x: float, y: float) -> float:  # real signature unknown; restored from 
     pass
 
 
-def frexp(x: float) -> Tuple[float, int]:  # real signature unknown; restored from __doc__
+def frexp(
+    x: float
+) -> Tuple[float, int]:  # real signature unknown; restored from __doc__
     """
     frexp(x)
 
@@ -203,7 +207,9 @@ def frexp(x: float) -> Tuple[float, int]:  # real signature unknown; restored fr
     pass
 
 
-def fsum(iterable: List[float]) -> float:  # real signature unknown; restored from __doc__
+def fsum(
+    iterable: List[float]
+) -> float:  # real signature unknown; restored from __doc__
     """
     fsum(iterable)
     
@@ -241,7 +247,9 @@ def hypot(x: float, y: float) -> float:  # real signature unknown; restored from
     pass
 
 
-def isclose(a: float, b: float) -> bool:  # real signature unknown; NOTE: unreliably restored from __doc__
+def isclose(
+    a: float, b: float
+) -> bool:  # real signature unknown; NOTE: unreliably restored from __doc__
     """
     isclose(a, b, *, rel_tol=1e-09, abs_tol=0.0) -> bool
 
@@ -311,7 +319,9 @@ def lgamma(x: float) -> float:  # real signature unknown; restored from __doc__
     pass
 
 
-def log(x: float, base: float) -> float:  # real signature unknown; restored from __doc__
+def log(
+    x: float, base: float
+) -> float:  # real signature unknown; restored from __doc__
     """
     log(x[, base])
     TODO make base optional
@@ -349,7 +359,9 @@ def log2(x: float) -> float:  # real signature unknown; restored from __doc__
     pass
 
 
-def modf(x: float) -> Tuple[float, float]:  # real signature unknown; restored from __doc__
+def modf(
+    x: float
+) -> Tuple[float, float]:  # real signature unknown; restored from __doc__
     """
     modf(x)
 

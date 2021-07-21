@@ -24,6 +24,7 @@ class HostAddrNone(HostAddrBase):  # pragma: no cover
     """
     Host "None" address. Used to indicate there's no address.
     """
+
     TYPE = AddrType.NONE
     LEN = 0
 
@@ -32,6 +33,7 @@ class HostAddrSVC(HostAddrBase):
     """
     Host "SVC" address. This is a pseudo- address type used for SCION services.
     """
+
     TYPE = AddrType.SVC
     LEN = 2
     NAME = "HostAddrSVC"
@@ -46,6 +48,7 @@ class HostAddrIPv4(HostAddrBase):
     """
     Host IPv4 address.
     """
+
     TYPE = AddrType.IPV4
     LEN = IPV4LENGTH // 8
 
@@ -54,8 +57,10 @@ class HostAddrIPv6(HostAddrBase):
     """
     Host IPv6 address.
     """
+
     TYPE = AddrType.IPV6
     LEN = IPV6LENGTH // 8
+
 
 def haddr_get_type(type_: int) -> Type[HostAddrBase]:  # pragma: no cover
     ...

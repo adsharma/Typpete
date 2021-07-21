@@ -17,6 +17,7 @@ UNICODE = 0
 T = 0
 TEMPLATE = 0
 
+
 class Match:
     pos = 0
     endpos = 0
@@ -28,15 +29,21 @@ class Match:
     # this match instance.
     re = Pattern()
 
-    def expand(self, template: str) -> str: ...
+    def expand(self, template: str) -> str:
+        ...
 
-    def group(self, group1: int = 1) -> str: ...
+    def group(self, group1: int = 1) -> str:
+        ...
 
-    def groups(self, default: str = "") -> List[str]: ...
+    def groups(self, default: str = "") -> List[str]:
+        ...
 
-    def groupdict(self, default: str = "") -> Dict[str, str]: ...
+    def groupdict(self, default: str = "") -> Dict[str, str]:
+        ...
 
-    def end(self, group: int = 1) -> int: ...
+    def end(self, group: int = 1) -> int:
+        ...
+
 
 class Pattern:
     flags = 0
@@ -44,27 +51,59 @@ class Pattern:
     groups = 0
     pattern = ""
 
-    def match(self, string: str, pos: int = 1, endpos: int = 1) -> Match: ...
-
-def compile(pattern: Union[Pattern, str], flags: int = 1) -> Pattern: ...
-
-def search(pattern: Union[Pattern, str], string: str, flags: int = 1) -> Match: ...
-
-def match(pattern: Union[Pattern, str], string: str, flags: int = 1) -> Match: ...
-
-def fullmatch(pattern: Union[Pattern, str], string: str, flags: int = 1) -> Match: ...
-
-def split(pattern: Union[Pattern, str], maxsplit: int = 1, flags: int = 1) -> Match: ...
-
-def findall(pattern: Union[Pattern, str], maxsplit: int = 1, flags: int = 1) -> List[object]: ...
-
-def sub(pattern: Union[Pattern, str], repl: Union[str, Callable[[Match], str]],
-        string: str, count: int = 0, flags: int = 0) -> str: ...
-
-def subn(pattern: Union[Pattern, str], repl: Union[str, Callable[[Match], str]],
-         string: str, count: int = 0, flags: int = 0) -> Tuple[str, int]: ...
+    def match(self, string: str, pos: int = 1, endpos: int = 1) -> Match:
+        ...
 
 
-def escape(string: str) -> str: ...
+def compile(pattern: Union[Pattern, str], flags: int = 1) -> Pattern:
+    ...
 
-def template(pattern: Union[str, Pattern], flags: int = 1) -> Pattern: ...
+
+def search(pattern: Union[Pattern, str], string: str, flags: int = 1) -> Match:
+    ...
+
+
+def match(pattern: Union[Pattern, str], string: str, flags: int = 1) -> Match:
+    ...
+
+
+def fullmatch(pattern: Union[Pattern, str], string: str, flags: int = 1) -> Match:
+    ...
+
+
+def split(pattern: Union[Pattern, str], maxsplit: int = 1, flags: int = 1) -> Match:
+    ...
+
+
+def findall(
+    pattern: Union[Pattern, str], maxsplit: int = 1, flags: int = 1
+) -> List[object]:
+    ...
+
+
+def sub(
+    pattern: Union[Pattern, str],
+    repl: Union[str, Callable[[Match], str]],
+    string: str,
+    count: int = 0,
+    flags: int = 0,
+) -> str:
+    ...
+
+
+def subn(
+    pattern: Union[Pattern, str],
+    repl: Union[str, Callable[[Match], str]],
+    string: str,
+    count: int = 0,
+    flags: int = 0,
+) -> Tuple[str, int]:
+    ...
+
+
+def escape(string: str) -> str:
+    ...
+
+
+def template(pattern: Union[str, Pattern], flags: int = 1) -> Pattern:
+    ...

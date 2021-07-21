@@ -1,5 +1,6 @@
 from typing import Optional
 
+
 class Serializable:
     def __init__(self, raw=None):
         pass
@@ -23,7 +24,6 @@ class PacketBase(Serializable):
 
 class PayloadBase(Serializable):  # pragma: no cover
     METADATA_LEN = 0
-
 
 
 class L4HeaderBase(Serializable):

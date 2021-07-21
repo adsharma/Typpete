@@ -15,6 +15,7 @@ class C(A):
 class D(B, C):
     pass
 
+
 d1 = D()
 who = d1.who_am_i()
 

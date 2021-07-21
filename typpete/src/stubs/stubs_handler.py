@@ -6,6 +6,7 @@ from typpete.src.context import Context
 INFERRED = {}
 STUB_ASTS = {}
 
+
 class StubsHandler:
     def __init__(self):
         self.asts = []
@@ -14,7 +15,7 @@ class StubsHandler:
         cur_directory = os.path.dirname(__file__)
         classes_and_functions_files = paths.classes_and_functions
         for file in classes_and_functions_files:
-            path = cur_directory + '/' + file
+            path = cur_directory + "/" + file
             r = open(path)
             tree = ast.parse(r.read())
             r.close()
@@ -22,7 +23,7 @@ class StubsHandler:
             self.asts.append(tree)
 
         for method in paths.methods:
-            path = cur_directory + '/' + method["path"]
+            path = cur_directory + "/" + method["path"]
             r = open(path)
             tree = ast.parse(r.read())
             r.close()
@@ -31,7 +32,7 @@ class StubsHandler:
             self.methods_asts.append(tree)
 
         for lib in paths.libraries:
-            path = cur_directory + '/' + paths.libraries[lib]
+            path = cur_directory + "/" + paths.libraries[lib]
             r = open(path)
             tree = ast.parse(r.read())
             r.close()
@@ -64,31 +65,51 @@ class StubsHandler:
 
         # Class definitions
         if not global_ctx:
-            relevant_nodes = [node for node in tree.body
-                              if (isinstance(node, ast.ClassDef) and
-                                  (node.name in used_names or self.get_relevant_nodes(node, used_names)))]
+            relevant_nodes = [
+                node
+                for node in tree.body
+                if (
+                    isinstance(node, ast.ClassDef)
+                    and (
+                        node.name in used_names
+                        or self.get_relevant_nodes(node, used_names)
+                    )
+                )
+            ]
         else:
-            relevant_nodes = [node for node in tree.body
-                              if (isinstance(node, ast.ClassDef))]
-
+            relevant_nodes = [
+                node for node in tree.body if (isinstance(node, ast.ClassDef))
+            ]
 
         # TypeVar definitions
-        relevant_nodes += [node for node in tree.body
-                           if (isinstance(node, ast.Assign) and
-                               isinstance(node.value, ast.Call) and
-                               isinstance(node.value.func, ast.Name) and
-                               node.value.func.id == "TypeVar")]
+        relevant_nodes += [
+            node
+            for node in tree.body
+            if (
+                isinstance(node, ast.Assign)
+                and isinstance(node.value, ast.Call)
+                and isinstance(node.value.func, ast.Name)
+                and node.value.func.id == "TypeVar"
+            )
+        ]
 
         # Function definitions
-        relevant_nodes += [node for node in tree.body
-                          if (isinstance(node, ast.FunctionDef) and
-                              node.name in used_names)]
+        relevant_nodes += [
+            node
+            for node in tree.body
+            if (isinstance(node, ast.FunctionDef) and node.name in used_names)
+        ]
 
-        name_nodes = [x.id for node in relevant_nodes for x in ast.walk(node) if isinstance(x, ast.Name)]
+        name_nodes = [
+            x.id
+            for node in relevant_nodes
+            for x in ast.walk(node)
+            if isinstance(x, ast.Name)
+        ]
         import_nodes = [node for node in tree.body if isinstance(node, ast.ImportFrom)]
         for node in import_nodes:
             appended = False
-            if node.module == 'typing':
+            if node.module == "typing":
                 # FIXME remove after added typing stub
                 continue
             for name in node.names:
@@ -98,13 +119,21 @@ class StubsHandler:
                     relevant_nodes.append(node)
                     used_names.append(name.name)
 
-
         # Variable assignments
         # For example, math package has `pi` declaration as pi = 3.14...
-        relevant_nodes += [node for node in tree.body
-                           if (isinstance(node, ast.Assign) and
-                               any([isinstance(x, ast.Name) and
-                                    x.id in used_names for x in node.targets]))]
+        relevant_nodes += [
+            node
+            for node in tree.body
+            if (
+                isinstance(node, ast.Assign)
+                and any(
+                    [
+                        isinstance(x, ast.Name) and x.id in used_names
+                        for x in node.targets
+                    ]
+                )
+            )
+        ]
 
         return relevant_nodes
 
@@ -133,8 +162,9 @@ class StubsHandler:
             context.types_map.update(ctx.types_map)
 
         for tree in self.methods_asts:
-            ctx = self.infer_file(tree, solver, used_names, infer_func,
-                                  tree.method_type)
+            ctx = self.infer_file(
+                tree, solver, used_names, infer_func, tree.method_type
+            )
             context.builtin_methods.update(ctx.builtin_methods)
 
     def infer_builtin_lib(self, module_name, solver, used_names, infer_func):

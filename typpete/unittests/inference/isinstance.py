@@ -8,7 +8,6 @@ class B:
         return 1
 
 
-
 def f(x):
     if isinstance(x, A):
         res = x.f()

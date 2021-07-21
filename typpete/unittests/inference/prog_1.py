@@ -1,5 +1,5 @@
 n, m = 1, 2
-a = [''] * n
+a = [""] * n
 for i in range(n):
     a[n - i - 1] = input()
 
@@ -10,7 +10,7 @@ for s in a:
     i, l, r = 0, 0, 0
     for z in s:
         zz = z
-        if z == '1':
+        if z == "1":
             if l == 0:
                 l = m - i + 1
             r = i

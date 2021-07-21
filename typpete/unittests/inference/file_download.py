@@ -39,6 +39,7 @@ class File:
         """Create new folder(s) in the local path"""
         os.makedirs(os.path.dirname(self.local_path), True)
 
+
 f1 = File("home/user", "http://www.download.com/", "file.py")
 ch1 = f1.download()
 

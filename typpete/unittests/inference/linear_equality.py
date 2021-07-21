@@ -10,6 +10,7 @@ def count_solutions(a, b):
             dp[j] += dp[j - a[i]]
     return dp[b]
 
+
 a = count_solutions([1, 2, 3], 2)
 
 # a := int

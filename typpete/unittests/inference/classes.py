@@ -14,11 +14,13 @@ class B:
 def fab(a):
     return a().f()
 
+
 x = fab(B)
 
 
 class C:
     x = 1
+
 
 c = C()
 

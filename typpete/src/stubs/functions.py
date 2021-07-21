@@ -12,10 +12,13 @@ NumOrStr = TypeVar("NumOrStr", Num, Str)
 NumOrStrNoComplex = TypeVar("NumOrStr", bool, int, float, Str)
 
 
-class Exception():
+class Exception:
     pass
 
+
 Titer = TypeVar("Titer")
+
+
 class Iterator(Generic[Titer]):
     pass
 
@@ -111,6 +114,7 @@ def divmod(_: IntOrFloat, __: IntOrFloat) -> Tuple[IntOrFloat, IntOrFloat]:
     """ Return the tuple (x//y, x%y).  Invariant: div*y + mod == x. """
     pass
 
+
 def enumerate(l: List[Tf]) -> List[Tuple[int, Tf]]:
     """Iterate over a list with key and value"""
     pass
@@ -193,7 +197,6 @@ def isinstance(x: object, y: object) -> bool:
     pass
 
 
-
 def iter(l: List[Tf]) -> Iterator[Tf]:
     pass
 
@@ -246,8 +249,15 @@ def oct(_: int) -> str:
     pass
 
 
-def open(file: Union[str, bytes, int], mode: str = None,
-         buffering: int = None, encoding: str = None, errors: str = None, newline: str = None, closefd: bool = None) -> IO:
+def open(
+    file: Union[str, bytes, int],
+    mode: str = None,
+    buffering: int = None,
+    encoding: str = None,
+    errors: str = None,
+    newline: str = None,
+    closefd: bool = None,
+) -> IO:
     """Open a file stream"""
     pass
 
@@ -262,7 +272,7 @@ def print(_: object) -> None:
     pass
 
 
-def range(x: int, y:int=None, z:int=None) -> List[int]:
+def range(x: int, y: int = None, z: int = None) -> List[int]:
     """Return a list of int from 0 (inclusive) to `x` (exclusive)
 
     TODO: make it RangeObject after implementing interfaces
@@ -313,7 +323,9 @@ def setattr(o: object, name: str, val: object) -> None:
     pass
 
 
-def sorted(_: List[Tf], key: Callable[[Tf], float]=lambda x: 1.0, reverse: bool=None) -> List[Tf]:
+def sorted(
+    _: List[Tf], key: Callable[[Tf], float] = lambda x: 1.0, reverse: bool = None
+) -> List[Tf]:
     """Return the input list in a sorted order
 
     TODO: Add support for different iterable objects

@@ -1,6 +1,4 @@
-classes_and_functions = [
-    "functions.py",
-]
+classes_and_functions = ["functions.py"]
 
 libraries = {
     "math": "libraries/math.py",
@@ -15,20 +13,8 @@ libraries = {
 }
 
 methods = [
-    {
-        "type": "list",
-        "path": "list_methods.py"
-    },
-    {
-        "type": "str",
-        "path": "str_methods.py"
-    },
-    {
-        "type": "dict",
-        "path": "dict_methods.py"
-    },
-    {
-        "type": "set",
-        "path": "set_methods.py"
-    }
+    {"type": "list", "path": "list_methods.py"},
+    {"type": "str", "path": "str_methods.py"},
+    {"type": "dict", "path": "dict_methods.py"},
+    {"type": "set", "path": "set_methods.py"},
 ]

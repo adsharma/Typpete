@@ -1,5 +1,6 @@
 from abc import ABCMeta, abstractmethod
 
+
 class Outcome:
     def __init__(self, value, name):
         self.value = value

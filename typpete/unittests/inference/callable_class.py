@@ -6,6 +6,7 @@ class A:
     def __call__(self, z):
         return z + [self.x + self.y]
 
+
 x = A()
 y = x([])
 
@@ -13,4 +14,3 @@ y = x([])
 # __call__ := Callable[[A, List[float]], List[float]]
 # x := A
 # y := List[float]
-

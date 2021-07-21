@@ -19,8 +19,10 @@ def get(self: Dict[Tdict, Udict], key: Tdict, default: Udict = None) -> Udict:
     """For key key, returns value"""
     pass
 
+
 def __getitem__(self: Dict[Tdict, Udict], item: Tdict) -> Udict:
     pass
+
 
 def __setitem__(self: Dict[Tdict, Udict], key: Tdict, value: Udict) -> None:
     pass
@@ -39,6 +41,7 @@ def popitem(self: Dict[Tdict, Udict]) -> Tuple[Tdict, Udict]:
 def update(self: Dict[Tdict, Udict], dict2: Dict[Tdict, Udict]) -> None:
     """Adds dictionary dict2's key-values pairs to dict"""
     pass
+
 
 def items(self: Dict[Tdict, Udict]) -> List[Tuple[Tdict, Udict]]:
     pass

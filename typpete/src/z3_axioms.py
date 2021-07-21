@@ -27,7 +27,13 @@ def overloading_axioms(left, right, result, method_name, types):
 
             # the result is the return type of the magic method
             return_type = getattr(types.type_sort, "func_2_return")(method_type)
-            axioms.append(And(left == instance, types.subtype(right, other_type), result == return_type))
+            axioms.append(
+                And(
+                    left == instance,
+                    types.subtype(right, other_type),
+                    result == return_type,
+                )
+            )
     return axioms
 
 
@@ -37,18 +43,25 @@ def comparison_axioms(left, right, method_name, types):
     """
     return [
         And(left != types.none, right != types.none),
-        Or([
-            And(types.subtype(left, types.float), types.subtype(right, types.float)),
-            And(left == types.list(types.list_type(left)), right == left),
-            And(left == types.set(types.set_type(left)), right == types.set(types.set_type(right))),
-            And(types.subtype(left, types.tuple), types.subtype(right, types.tuple)),
-            And(left == types.string, right == types.string),
-            And(left == types.bytes, right == types.bytes),
-        ]
-        + overloading_axioms(left, right, types.bool, method_name, types)
-        )
+        Or(
+            [
+                And(
+                    types.subtype(left, types.float), types.subtype(right, types.float)
+                ),
+                And(left == types.list(types.list_type(left)), right == left),
+                And(
+                    left == types.set(types.set_type(left)),
+                    right == types.set(types.set_type(right)),
+                ),
+                And(
+                    types.subtype(left, types.tuple), types.subtype(right, types.tuple)
+                ),
+                And(left == types.string, right == types.string),
+                And(left == types.bytes, right == types.bytes),
+            ]
+            + overloading_axioms(left, right, types.bool, method_name, types)
+        ),
     ]
-
 
 
 def add(left, right, result, types):
@@ -67,19 +80,30 @@ def add(left, right, result, types):
     """
     return [
         And(left != types.none, right != types.none),
-        Or([
-               And(types.subtype(left, types.complex), types.subtype(right, left), result == left),
-               And(types.subtype(right, types.complex), types.subtype(left, right), result == right),
-               And(types.subtype(left, types.seq), left == right, left == result),
-
-               And(left == types.list(types.list_type(left)),
-                   right == left,
-                   result == left,
-                   ),
-               And(left == types.string, right == types.string, result == types.string)
-           ]
-           + overloading_axioms(left, right, result, "__add__", types)
-           ),
+        Or(
+            [
+                And(
+                    types.subtype(left, types.complex),
+                    types.subtype(right, left),
+                    result == left,
+                ),
+                And(
+                    types.subtype(right, types.complex),
+                    types.subtype(left, right),
+                    result == right,
+                ),
+                And(types.subtype(left, types.seq), left == right, left == result),
+                And(
+                    left == types.list(types.list_type(left)),
+                    right == left,
+                    result == left,
+                ),
+                And(
+                    left == types.string, right == types.string, result == types.string
+                ),
+            ]
+            + overloading_axioms(left, right, result, "__add__", types)
+        ),
     ]
 
 
@@ -98,21 +122,38 @@ def mult(left, right, result, types):
     """
     return [
         And(left != types.none, right != types.none),
-        Or([
-            # multiplication of two booleans is an integer. Handle it separately
-            And(left == types.bool, right == types.bool, result == types.int),
-            And(Or(left != types.bool, right != types.bool),
-                Or(
-                    And(types.subtype(left, types.seq), types.subtype(right, types.int), result == left),
-                    And(types.subtype(left, types.int), types.subtype(right, types.seq), result == right),
-
-                    And(types.subtype(left, types.complex), types.subtype(right, left), result == left),
-                    And(types.subtype(right, types.complex), types.subtype(left, right), result == right),
-                    )
-                )
+        Or(
+            [
+                # multiplication of two booleans is an integer. Handle it separately
+                And(left == types.bool, right == types.bool, result == types.int),
+                And(
+                    Or(left != types.bool, right != types.bool),
+                    Or(
+                        And(
+                            types.subtype(left, types.seq),
+                            types.subtype(right, types.int),
+                            result == left,
+                        ),
+                        And(
+                            types.subtype(left, types.int),
+                            types.subtype(right, types.seq),
+                            result == right,
+                        ),
+                        And(
+                            types.subtype(left, types.complex),
+                            types.subtype(right, left),
+                            result == left,
+                        ),
+                        And(
+                            types.subtype(right, types.complex),
+                            types.subtype(left, right),
+                            result == right,
+                        ),
+                    ),
+                ),
             ]
-           + overloading_axioms(left, right, result, "__mul__", types)
-        )
+            + overloading_axioms(left, right, result, "__mul__", types)
+        ),
     ]
 
 
@@ -129,8 +170,13 @@ def div(left, right, result, types):
     return [
         And(left != types.none, right != types.none),
         And(types.subtype(left, types.complex), types.subtype(right, types.complex)),
-        Implies(Or(left == types.complex, right == types.complex), result == types.complex),
-        Implies(Not(Or(left == types.complex, right == types.complex)), result == types.float)
+        Implies(
+            Or(left == types.complex, right == types.complex), result == types.complex
+        ),
+        Implies(
+            Not(Or(left == types.complex, right == types.complex)),
+            result == types.float,
+        ),
     ]
 
 
@@ -147,17 +193,22 @@ def arithmetic(left, right, result, magic_method, is_mod, types):
         - "Case #%i: %i" % (u, v)
     """
     axioms = [
-        And(types.subtype(left, types.complex), types.subtype(right, left), result == left),
-        And(types.subtype(right, types.complex), types.subtype(left, right), result == right),
+        And(
+            types.subtype(left, types.complex),
+            types.subtype(right, left),
+            result == left,
+        ),
+        And(
+            types.subtype(right, types.complex),
+            types.subtype(left, right),
+            result == right,
+        ),
     ] + overloading_axioms(left, right, result, magic_method, types)
 
     if is_mod:
         axioms += [And(Or(left == types.string, left == types.bytes), result == left)]
 
-    return [
-        And(left != types.none, right != types.none),
-        Or(axioms)
-    ]
+    return [And(left != types.none, right != types.none), Or(axioms)]
 
 
 def bitwise(left, right, result, magic_method, types):
@@ -171,8 +222,14 @@ def bitwise(left, right, result, magic_method, types):
         - True ^ False
     """
     return arithmetic(left, right, result, magic_method, False, types) + [
-            Implies(And(types.subtype(left, types.complex), types.subtype(right, types.complex)),
-                    types.subtype(left, types.int), types.subtype(right, types.int))]
+        Implies(
+            And(
+                types.subtype(left, types.complex), types.subtype(right, types.complex)
+            ),
+            types.subtype(left, types.int),
+            types.subtype(right, types.int),
+        )
+    ]
 
 
 def bool_op(values, result, types):
@@ -195,10 +252,7 @@ def unary_invert(unary, types):
     Ex:
     - ~231
     """
-    return [
-        types.subtype(unary, types.int),
-        unary != types.none
-    ]
+    return [types.subtype(unary, types.int), unary != types.none]
 
 
 def unary_other(unary, result, types):
@@ -215,7 +269,7 @@ def unary_other(unary, result, types):
         unary != types.none,
         types.subtype(unary, types.complex),
         Implies(unary == types.bool, result == types.int),
-        Implies(unary != types.bool, result == unary)
+        Implies(unary != types.bool, result == unary),
     ]
 
 
@@ -225,10 +279,7 @@ def if_expr(a, b, result, types):
     Cases:
         - (a) if (TEST) else (b) --> Super(a, b)
     """
-    return [
-        types.subtype(a, result),
-        types.subtype(b, result)
-    ]
+    return [types.subtype(a, result), types.subtype(b, result)]
 
 
 def index(indexed, ind, result, types):
@@ -246,32 +297,51 @@ def index(indexed, ind, result, types):
     # Assert that 'indexed' can be a tuple of an arbitrary length, where the result is the super-type of its elements.
     t = []
     for cur_len in range(1, len(types.tuples)):
-        tuple_args = [getattr(types.type_sort, "tuple_{}_arg_{}".format(cur_len, i + 1))(indexed)
-                      for i in range(cur_len)]
-        t.append(And(
-            indexed == types.tuples[cur_len](*tuple_args),
-            *[types.subtype(x, result) for x in tuple_args]
-        ))
+        tuple_args = [
+            getattr(types.type_sort, "tuple_{}_arg_{}".format(cur_len, i + 1))(indexed)
+            for i in range(cur_len)
+        ]
+        t.append(
+            And(
+                indexed == types.tuples[cur_len](*tuple_args),
+                *[types.subtype(x, result) for x in tuple_args]
+            )
+        )
 
-    t.extend(overloading_axioms(indexed, ind, result, '__getitem__', types))
+    t.extend(overloading_axioms(indexed, ind, result, "__getitem__", types))
 
-    return [
+    return (
+        [
+            Or(
+                [
+                    And(
+                        indexed == types.dict(types.dict_key_type(indexed), result),
+                        types.subtype(ind, types.dict_key_type(indexed)),
+                    ),
+                    And(types.subtype(ind, types.int), indexed == types.list(result)),
+                    And(
+                        types.subtype(ind, types.int),
+                        indexed == types.string,
+                        result == types.string,
+                    ),
+                    And(
+                        types.subtype(ind, types.int),
+                        indexed == types.bytes,
+                        result == types.bytes,
+                    ),
+                ]
+                + t
+            )
+        ],
         Or(
-            [And(indexed == types.dict(types.dict_key_type(indexed), result),
-                 types.subtype(ind, types.dict_key_type(indexed))),
-             And(types.subtype(ind, types.int), indexed == types.list(result)),
-             And(types.subtype(ind, types.int), indexed == types.string, result == types.string),
-             And(types.subtype(ind, types.int), indexed == types.bytes, result == types.bytes),
-             ]
-            + t
-        )
-    ], Or(
-            [indexed == types.dict(ind, result),
-             And(ind == types.int, indexed == types.list(result)),
-             And(ind == types.int, indexed == types.string, result == types.string),
-             And(ind == types.int, indexed == types.bytes, result == types.bytes),
-             ]
-        )
+            [
+                indexed == types.dict(ind, result),
+                And(ind == types.int, indexed == types.list(result)),
+                And(ind == types.int, indexed == types.string, result == types.string),
+                And(ind == types.int, indexed == types.bytes, result == types.bytes),
+            ]
+        ),
+    )
 
 
 def slicing(lower, upper, step, sliced, result, types):
@@ -281,13 +351,18 @@ def slicing(lower, upper, step, sliced, result, types):
         - Sequence --> Sequence
     """
     return [
-        And(types.subtype(lower, types.int), types.subtype(upper, types.int), types.subtype(step, types.int),
+        And(
+            types.subtype(lower, types.int),
+            types.subtype(upper, types.int),
+            types.subtype(step, types.int),
             Or(
                 sliced == types.string,
                 sliced == types.bytes,
                 types.subtype(sliced, types.tuple),
-                sliced == types.list(types.list_type(sliced))
-            ), result == sliced)
+                sliced == types.list(types.list_type(sliced)),
+            ),
+            result == sliced,
+        )
     ]
 
 
@@ -317,9 +392,7 @@ def assignment(target, value, types):
     
     The left hand side is either a super type or a numerically stronger type of the right hand side.
     """
-    return [
-        types.subtype(value, target)
-    ]
+    return [types.subtype(value, target)]
 
 
 def subscript_assignment(target, types):
@@ -334,7 +407,7 @@ def subscript_assignment(target, types):
     return [
         target != types.string,
         target != types.bytes,
-        Not(types.subtype(target, types.tuple))
+        Not(types.subtype(target, types.tuple)),
     ]
 
 
@@ -344,11 +417,13 @@ def delete_subscript(indexed, types):
     Prevent subscript deletion of tuples, strings and bytes (Immutable sequences)
     """
     return [
-        Not(Or(
-            indexed == types.string,
-            indexed == types.bytes,
-            types.subtype(indexed, types.tuple)
-        ))
+        Not(
+            Or(
+                indexed == types.string,
+                indexed == types.bytes,
+                types.subtype(indexed, types.tuple),
+            )
+        )
     ]
 
 
@@ -357,9 +432,7 @@ def body(result, new, types):
     
     The body type is the super-type of all its statements, or none if no statement returns type.
     """
-    return [
-        Implies(new != types.none, result == new)
-    ]
+    return [Implies(new != types.none, result == new)]
 
 
 def control_flow(then, orelse, result, types):
@@ -367,10 +440,10 @@ def control_flow(then, orelse, result, types):
     # TODO numeric casting
     return [
         Implies(orelse == types.none, result == then),
-        Implies(orelse != types.none, And(
-            types.subtype(then, result),
-            types.subtype(orelse, result)
-        ))
+        Implies(
+            orelse != types.none,
+            And(types.subtype(then, result), types.subtype(orelse, result)),
+        ),
     ]
 
 
@@ -382,7 +455,7 @@ def for_loop(iterable, target, types):
             iterable == types.set(target),
             iterable == types.dict(target, types.dict_value_type(iterable)),
             And(iterable == types.string, target == types.string),
-            And(iterable == types.bytes, target == types.bytes)
+            And(iterable == types.bytes, target == types.bytes),
         )
     ]
 
@@ -392,7 +465,7 @@ def try_except(then, orelse, final, result, types):
     return [
         types.subtype(then, result),
         types.subtype(orelse, result),
-        types.subtype(final, result)
+        types.subtype(final, result),
     ]
 
 
@@ -416,12 +489,12 @@ def one_type_instantiation(class_name, args, result, types, tvs):
         # Get the instance accessor from the type_sort data type.
         instance = getattr(types.type_sort, "type_arg_0")(types.all_types[class_name])
 
-
-
         # Assert that it's a call to this __init__ function
 
         # Get the default args count
-        defaults_accessor = getattr(types.type_sort, "func_{}_defaults_args".format(init_args_count))
+        defaults_accessor = getattr(
+            types.type_sort, "func_{}_defaults_args".format(init_args_count)
+        )
         default_count = defaults_accessor(init_func)
 
         rem_args_count = init_args_count - len(args) - 1
@@ -429,23 +502,32 @@ def one_type_instantiation(class_name, args, result, types, tvs):
         for i in range(rem_args_count):
             arg_idx = len(args) + i + 2
             # Get the default arg type
-            arg_accessor = getattr(types.type_sort, "func_{}_arg_{}".format(init_args_count, arg_idx))
+            arg_accessor = getattr(
+                types.type_sort, "func_{}_arg_{}".format(init_args_count, arg_idx)
+            )
             rem_args.append(arg_accessor(init_func))
 
-        all_args = (instance,) + args + tuple(rem_args) + (types.none,)  # The return type of __init__ is None
+        all_args = (
+            (instance,) + args + tuple(rem_args) + (types.none,)
+        )  # The return type of __init__ is None
         z3_func_args = (default_count,) + all_args
         return And(
-                  result == instance,
-                  init_func == types.funcs[len(args) + len(rem_args) + 1](z3_func_args), default_count >= rem_args_count)
+            result == instance,
+            init_func == types.funcs[len(args) + len(rem_args) + 1](z3_func_args),
+            default_count >= rem_args_count,
+        )
     else:
 
-
-        rec_type = types.classes[class_name](tvs[:len(types.config.class_type_params[class_name])])
+        rec_type = types.classes[class_name](
+            tvs[: len(types.config.class_type_params[class_name])]
+        )
         generic_receiver_type = result == rec_type
         generic_args = (rec_type,) + args
         # Assert that it's a call to this __init__ function
-        return And(generic_receiver_type, Or(*generic_call_axioms(init_func, generic_args, types.none, types, tvs)))
-
+        return And(
+            generic_receiver_type,
+            Or(*generic_call_axioms(init_func, generic_args, types.none, types, tvs)),
+        )
 
 
 def instance_axioms(called, args, result, types, tvs):
@@ -458,7 +540,9 @@ def instance_axioms(called, args, result, types, tvs):
     with the __init__ function of every call
     """
 
-    if len(args) + 1 >= len(types.funcs):  # Instantiating a class with more number of args than the max possible number
+    if len(args) + 1 >= len(
+        types.funcs
+    ):  # Instantiating a class with more number of args than the max possible number
         return []
 
     # Assert with __init__ function of all classes in the program
@@ -466,8 +550,12 @@ def instance_axioms(called, args, result, types, tvs):
     for t in types.all_types:
         if t in types.config.class_type_params:
             continue
-        axioms.append(And(one_type_instantiation(t, args, result, types, tvs),
-                          called == types.all_types[t]))
+        axioms.append(
+            And(
+                one_type_instantiation(t, args, result, types, tvs),
+                called == types.all_types[t],
+            )
+        )
     return axioms
 
 
@@ -477,22 +565,33 @@ def function_call_axioms(called, args, result, types):
     defaults count for the function matches the inferred one.
     """
     axioms = []
-    for i in range(len(args), len(types.funcs)):  # Only assert with functions with length >= call arguments length
-        rem_args = i - len(args)  # The remaining arguments are expected to have default value in the func definition.
+    for i in range(
+        len(args), len(types.funcs)
+    ):  # Only assert with functions with length >= call arguments length
+        rem_args = i - len(
+            args
+        )  # The remaining arguments are expected to have default value in the func definition.
         if rem_args > types.config.max_default_args:
             break
         rem_args_types = ()
         for j in range(rem_args):
             arg_idx = len(args) + j + 1
-            arg_accessor = getattr(types.type_sort, "func_{}_arg_{}".format(i, arg_idx))  # Get the default arg type
+            arg_accessor = getattr(
+                types.type_sort, "func_{}_arg_{}".format(i, arg_idx)
+            )  # Get the default arg type
             rem_args_types += (arg_accessor(called),)
 
         # Get the default args count accessor
         defaults_accessor = getattr(types.type_sort, "func_{}_defaults_args".format(i))
         defaults_count = defaults_accessor(called)
         # Add the axioms for function call, default args count, and arguments subtyping.
-        axiom = And(called == types.funcs[i]((defaults_accessor(called),) + tuple(args) + rem_args_types + (result,)),
-                    defaults_count >= rem_args)
+        axiom = And(
+            called
+            == types.funcs[i](
+                (defaults_accessor(called),) + tuple(args) + rem_args_types + (result,)
+            ),
+            defaults_count >= rem_args,
+        )
         axioms.append(axiom)
     return axioms
 
@@ -504,19 +603,23 @@ def generic_call_axioms(called, args, result, types, tvs):
         generic_constr = types.generics[i]
         cargs = []
         for j in range(i + 1):
-            cargs.append(getattr(types, 'generic{}_tv{}'.format(i + 1, j + 1))(called))
-        is_generic = called == generic_constr(*cargs, getattr(types, 'generic{}_func'.format(i + 1))(called))
+            cargs.append(getattr(types, "generic{}_tv{}".format(i + 1, j + 1))(called))
+        is_generic = called == generic_constr(
+            *cargs, getattr(types, "generic{}_func".format(i + 1))(called)
+        )
 
         under_upper = []
         for k, ta in enumerate(tvs):
             if not k <= i:
                 break
-            current_tv = getattr(types, 'generic{}_tv{}'.format(i + 1, k + 1))(called)
+            current_tv = getattr(types, "generic{}_tv{}".format(i + 1, k + 1))(called)
+
             def mysubst(a):
                 res = a
                 for l in range(k):
                     res = types.subst(res, cargs[l], tvs[l])
                 return res
+
             under_upper.append(types.subtype(ta, mysubst(types.upper(current_tv))))
 
         def mysubst(a):
@@ -525,25 +628,31 @@ def generic_call_axioms(called, args, result, types, tvs):
                 res = types.subst(res, arg, tv)
             return res
 
-        called_func = getattr(types, 'generic{}_func'.format(i + 1))(called)
-
+        called_func = getattr(types, "generic{}_func".format(i + 1))(called)
 
         ##
-        for i in range(len(args), len(types.funcs)):  # Only assert with functions with length >= call arguments length
-            rem_args = i - len(args)  # The remaining arguments are expected to have default value in the func definition.
+        for i in range(
+            len(args), len(types.funcs)
+        ):  # Only assert with functions with length >= call arguments length
+            rem_args = i - len(
+                args
+            )  # The remaining arguments are expected to have default value in the func definition.
             if rem_args > types.config.max_default_args:
                 break
             rem_args_types = ()
             for j in range(rem_args):
                 arg_idx = len(args) + j + 1
-                arg_accessor = getattr(types.type_sort, "func_{}_arg_{}".format(i, arg_idx))  # Get the default arg type
+                arg_accessor = getattr(
+                    types.type_sort, "func_{}_arg_{}".format(i, arg_idx)
+                )  # Get the default arg type
                 rem_args_types += (arg_accessor(called_func),)
 
             all_args = tuple(args) + rem_args_types
 
             # Get the default args count accessor
-            defaults_accessor = getattr(types.type_sort,
-                                        "func_{}_defaults_args".format(i))
+            defaults_accessor = getattr(
+                types.type_sort, "func_{}_defaults_args".format(i)
+            )
             defaults_count = defaults_accessor(called_func)
             if len(all_args) == 0:
                 axiom = mysubst(called_func) == types.funcs[0](0, result)
@@ -552,8 +661,12 @@ def generic_call_axioms(called, args, result, types, tvs):
                 subtype_axioms = []
                 z3_args = []
                 for i in range(len(all_args)):
-                    z3_arg = mysubst(getattr(types.type_sort,
-                                             "func_{}_arg_{}".format(len(all_args), i + 1))(called_func))
+                    z3_arg = mysubst(
+                        getattr(
+                            types.type_sort,
+                            "func_{}_arg_{}".format(len(all_args), i + 1),
+                        )(called_func)
+                    )
                     z3_args.append(z3_arg)
                     if i < len(args):
                         arg = args[i]
@@ -561,7 +674,13 @@ def generic_call_axioms(called, args, result, types, tvs):
 
                 func_type = types.funcs[len(all_args)]
                 z3_args.append(result)
-                res = And(subtype_axioms + [mysubst(called_func) == func_type(defaults_count, *z3_args), defaults_count >= rem_args])
+                res = And(
+                    subtype_axioms
+                    + [
+                        mysubst(called_func) == func_type(defaults_count, *z3_args),
+                        defaults_count >= rem_args,
+                    ]
+                )
                 axiom = And(is_generic, *under_upper, res)
                 axioms.append(axiom)
 
@@ -580,14 +699,7 @@ def call(called, args, result, types, tvs):
     r2 = instance_axioms(called, args, result, types, tvs)
     r3 = class_call_axioms(called, args, result, types)
     r4 = generic_call_axioms(called, args, result, types, tvs)
-    return [
-        Or(
-            (r1
-             + r2
-             + r3
-             + r4)
-        )
-    ]
+    return [Or((r1 + r2 + r3 + r4))]
 
 
 def class_call_axioms(called, args, result, types):
@@ -602,8 +714,12 @@ def class_call_axioms(called, args, result, types):
             call_type = types.instance_attributes[t]["__call__"]
             instance = getattr(types.type_sort, "type_arg_0")(types.all_types[t])
             args_types = (instance,) + args
-            axioms.append(And(called == instance,
-                              Or(function_call_axioms(call_type, args_types, result, types))))
+            axioms.append(
+                And(
+                    called == instance,
+                    Or(function_call_axioms(call_type, args_types, result, types)),
+                )
+            )
     return axioms
 
 
@@ -619,8 +735,12 @@ def staticmethod_call(class_type, args, result, attr, types):
             decorators = types.class_to_funcs[t][attr][1]
             if "staticmethod" in decorators:
                 attr_type = types.instance_attributes[t][attr]
-                axioms.append(And(class_type == types.all_types[t],
-                                  Or(function_call_axioms(attr_type, args, result, types))))
+                axioms.append(
+                    And(
+                        class_type == types.all_types[t],
+                        Or(function_call_axioms(attr_type, args, result, types)),
+                    )
+                )
     return axioms
 
 
@@ -649,20 +769,43 @@ def instancemethod_call(instance, args, result, attr, types, tvs):
 
                 receiver_subtype = False
                 if t in types.config.class_type_params:
-                    type_func = types.classes[t] if t not in ALIASES else getattr(types.type_sort, ALIASES[t])
-                    rec_type = type_func(tvs[:len(types.config.class_type_params[t])])
+                    type_func = (
+                        types.classes[t]
+                        if t not in ALIASES
+                        else getattr(types.type_sort, ALIASES[t])
+                    )
+                    rec_type = type_func(tvs[: len(types.config.class_type_params[t])])
                     receiver_subtype = types.subtype(instance, rec_type)
-                    axioms.append(And(receiver_subtype, Or(*generic_call_axioms(attr_type, list(args), result, types, tvs))))
+                    axioms.append(
+                        And(
+                            receiver_subtype,
+                            Or(
+                                *generic_call_axioms(
+                                    attr_type, list(args), result, types, tvs
+                                )
+                            ),
+                        )
+                    )
                 else:
-                    axioms.append(And(instance == types.type_sort.type_arg_0(types.all_types[t]),
-                                     Or(function_call_axioms(attr_type, args, result, types))),
-                                 )
+                    axioms.append(
+                        And(
+                            instance == types.type_sort.type_arg_0(types.all_types[t]),
+                            Or(function_call_axioms(attr_type, args, result, types)),
+                        )
+                    )
 
         # Otherwise, check if it is an instance attribute, if so add call axioms with no receiver
         elif attr in types.instance_attributes[t]:
             attr_type = types.instance_attributes[t][attr]
-            axioms.append(And(instance == types.type_sort.type_arg_0(types.all_types[t]),
-                              Or(function_call_axioms(attr_type, args[1:], result, types) + class_call_axioms(attr_type, args[1:], result, types))))
+            axioms.append(
+                And(
+                    instance == types.type_sort.type_arg_0(types.all_types[t]),
+                    Or(
+                        function_call_axioms(attr_type, args[1:], result, types)
+                        + class_call_axioms(attr_type, args[1:], result, types)
+                    ),
+                )
+            )
     return axioms
 
 
@@ -678,34 +821,52 @@ def attribute(instance, attr, result, types):
             attr_type = types.instance_attributes[t][attr]
             if t in types.config.class_type_params:
                 tps = types.config.class_type_params[t]
-                accessors = [ctb[1:] for ctb in types.config.class_to_base
-                             if isinstance(ctb, tuple) and ctb[0] == t]
+                accessors = [
+                    ctb[1:]
+                    for ctb in types.config.class_to_base
+                    if isinstance(ctb, tuple) and ctb[0] == t
+                ]
                 accessors = accessors[0]
                 args = [getattr(types.type_sort, a)(instance) for a in accessors]
-                params = [getattr(types, "generic{}_tv{}".format(len(tps), i+1))(attr_type)
-                          for i, _ in enumerate(tps)]
+                params = [
+                    getattr(types, "generic{}_tv{}".format(len(tps), i + 1))(attr_type)
+                    for i, _ in enumerate(tps)
+                ]
                 gen_func = getattr(types, "generic{}_func".format(len(tps)))(attr_type)
 
-                generic_attr_type = getattr(types.type_sort, 'is_generic{}'.format(len(tps)))(attr_type)
+                generic_attr_type = getattr(
+                    types.type_sort, "is_generic{}".format(len(tps))
+                )(attr_type)
 
                 type_instance = types.classes[t](args)
                 substituted = gen_func
                 for arg, param in zip(args, params):
                     substituted = types.subst(substituted, param, arg)
-                axioms.append(And(instance == type_instance, generic_attr_type, result == substituted))
+                axioms.append(
+                    And(
+                        instance == type_instance,
+                        generic_attr_type,
+                        result == substituted,
+                    )
+                )
                 continue
             type_instance = getattr(types.type_sort, "type_arg_0")(types.all_types[t])
 
             # Check if it is a property access
-            if attr in types.class_to_funcs[t] and "property" in \
-                    types.class_to_funcs[t][attr][1]:
+            if (
+                attr in types.class_to_funcs[t]
+                and "property" in types.class_to_funcs[t][attr][1]
+            ):
                 # Set the attribute type to be the return type of the property method
                 method_type = types.instance_attributes[t][attr]
                 arg_accessor = getattr(types.type_sort, "func_1_arg_1")
-                axioms.append(And(instance == type_instance,
-                                  method_type == types.funcs[1](0,
-                                                                arg_accessor(method_type),
-                                                                result)))
+                axioms.append(
+                    And(
+                        instance == type_instance,
+                        method_type
+                        == types.funcs[1](0, arg_accessor(method_type), result),
+                    )
+                )
             else:
                 attr_type = types.instance_attributes[t][attr]
                 axioms.append(And(instance == type_instance, result == attr_type))

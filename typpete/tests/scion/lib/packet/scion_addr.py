@@ -23,17 +23,15 @@ import struct
 # SCION
 from lib.errors import SCIONIndexError, SCIONParseError
 from lib.packet.packet_base import Serializable
-from lib.packet.host_addr import (
-    HostAddrBase,
-    haddr_get_type,
-)
+from lib.packet.host_addr import HostAddrBase, haddr_get_type
 from lib.util import Raw
 
 
-class ISD_AS():
+class ISD_AS:
     """
     Class for representing isd-as pair.
     """
+
     NAME = "ISD_AS"
     LEN = 4
 
@@ -82,7 +80,7 @@ class ISD_AS():
             AS ID in the remaining 20 bits.
         """
         self._isd = raw >> 20
-        self._as = raw & 0x000fffff
+        self._as = raw & 0x000FFFFF
 
     @staticmethod  # CHANGE: Turned classmethod into staticmethod
     def from_values(isd, as_):  # pragma: no cover
@@ -96,11 +94,13 @@ class ISD_AS():
 
     def int(self):
         isd_as = self._isd << 20
-        isd_as |= self._as & 0x000fffff
+        isd_as |= self._as & 0x000FFFFF
         return isd_as
 
     def any_as(self):
-        return ISD_AS.from_values(self._isd, 0)  # CHANGE: Changed call target from self to class
+        return ISD_AS.from_values(
+            self._isd, 0
+        )  # CHANGE: Changed call target from self to class
 
     def params(self, name="first"):  # pragma: no cover
         """Provides parameters for querying PathSegmentDB"""
@@ -118,8 +118,9 @@ class ISD_AS():
         elif idx == 1:
             return self._as
         else:
-            raise SCIONIndexError("Invalid index used on %s object: %s" % (
-                                  (self.NAME, idx)))
+            raise SCIONIndexError(
+                "Invalid index used on %s object: %s" % ((self.NAME, idx))
+            )
 
     def __int__(self):
         return self.int()
@@ -148,7 +149,8 @@ class SCIONAddr(object):
     :ivar HostAddrBase host: host address.
     :ivar int addr_len: address length.
     """
-    def __init__(self, addr_info = False):  # pragma: no cover
+
+    def __init__(self, addr_info=False):  # pragma: no cover
         """
         Initialize an instance of the class SCIONAddr.
 
@@ -172,7 +174,7 @@ class SCIONAddr(object):
         self.isd_as = ISD_AS(data.pop(ISD_AS.LEN))
         self.host = haddr_type(data.pop(haddr_type.LEN))
 
-    @staticmethod    # CHANGE: Turned classmethod into staticmethod
+    @staticmethod  # CHANGE: Turned classmethod into staticmethod
     def from_values(isd_as, host):  # pragma: no cover
         """
         Create an instance of the class SCIONAddr.
@@ -194,7 +196,7 @@ class SCIONAddr(object):
         """
         return self.isd_as.pack() + self.host.pack()
 
-    @staticmethod    # CHANGE: Turned classmethod into staticmethod
+    @staticmethod  # CHANGE: Turned classmethod into staticmethod
     def calc_len(type_):  # pragma: no cover
         class_ = haddr_get_type(type_)
         return ISD_AS.LEN + class_.LEN
@@ -203,8 +205,7 @@ class SCIONAddr(object):
         return len(self.isd_as) + len(self.host)
 
     def __eq__(self, other):  # pragma: no cover
-        return (self.isd_as == other.isd_as and
-                self.host == other.host)
+        return self.isd_as == other.isd_as and self.host == other.host
 
     def __str__(self):
         """

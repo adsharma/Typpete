@@ -26,13 +26,15 @@
 from typing import cast
 from abc import ABCMeta, abstractmethod
 
+
 class Result:
     def __init__(self, value, pos):
         self.value = value
         self.pos = pos
 
     def __repr__(self):
-        return 'Result(%s, %d)' % (self.value, self.pos)
+        return "Result(%s, %d)" % (self.value, self.pos)
+
 
 class Parser(metaclass=ABCMeta):
     def __add__(self, other):
@@ -51,6 +53,7 @@ class Parser(metaclass=ABCMeta):
     def __call__(self, tokens, pos):
         pass
 
+
 class Tag(Parser):
     def __init__(self, tag):
         self.tag = tag
@@ -61,18 +64,22 @@ class Tag(Parser):
         else:
             return None
 
+
 class Reserved(Parser):
     def __init__(self, value, tag):
         self.value = value
         self.tag = tag
 
     def __call__(self, tokens, pos):
-        if pos < len(tokens) and \
-           tokens[pos][0] == self.value and \
-           tokens[pos][1] is self.tag:
+        if (
+            pos < len(tokens)
+            and tokens[pos][0] == self.value
+            and tokens[pos][1] is self.tag
+        ):
             return Result(tokens[pos][0], pos + 1)
         else:
             return None
+
 
 class Concat(Parser):
     def __init__(self, left, right):
@@ -88,6 +95,7 @@ class Concat(Parser):
                 return Result(combined_value, right_result.pos)
         return None
 
+
 class Exp(Parser):
     def __init__(self, parser, separator):
         self.parser = parser
@@ -99,6 +107,7 @@ class Exp(Parser):
         def process_next(parsed):
             (sepfunc, right) = parsed
             return sepfunc(result.value, right)
+
         next_parser = self.separator + self.parser ^ process_next
 
         next_result = result
@@ -107,6 +116,7 @@ class Exp(Parser):
             if next_result:
                 result = next_result
         return result
+
 
 class Alternate(Parser):
     def __init__(self, left, right):
@@ -121,6 +131,7 @@ class Alternate(Parser):
             right_result = self.right(tokens, pos)
             return right_result
 
+
 class Opt(Parser):
     def __init__(self, parser):
         self.parser = parser
@@ -131,6 +142,7 @@ class Opt(Parser):
             return result
         else:
             return Result(None, pos)
+
 
 class Rep(Parser):
     def __init__(self, parser):
@@ -145,6 +157,7 @@ class Rep(Parser):
             result = self.parser(tokens, pos)
         return Result(results, pos)
 
+
 class Process(Parser):
     def __init__(self, parser, function):
         self.parser = parser
@@ -157,6 +170,7 @@ class Process(Parser):
             result.value = self.function(arg)
             return result
 
+
 class Lazy(Parser):
     def __init__(self, parser_func):
         self.parser = None
@@ -166,6 +180,7 @@ class Lazy(Parser):
         if not self.parser:
             self.parser = self.parser_func()
         return self.parser(tokens, pos)
+
 
 class Phrase(Parser):
     def __init__(self, parser):
