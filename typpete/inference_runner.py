@@ -1,3 +1,4 @@
+from pathlib import Path
 from typpete.src.stmt_inferrer import *
 from typpete.src.import_handler import ImportHandler
 import typpete.src.config as config
@@ -5,39 +6,37 @@ from z3 import Optimize
 
 import os
 import time
+import argparse
 import astunparse
 import sys
 
 
-def configure_inference(flags):
+def configure_inference(args):
     class_type_params = None
     func_type_params = None
-    for flag in flags:
-        flag_assignment = flag[2:]
-        try:
-            flag_name, flag_value = flag_assignment.split('=')
-        except ValueError:
-            print("Invalid flag assignment {}".format(flag_assignment))
-            continue
+    for flag_name in vars(args):
+        flag_value = getattr(args, flag_name)
         # func_type_params=make_object,1,d,2
         if flag_name == 'func_type_params':
-            if func_type_params is None:
+            if func_type_params is None or flag_value == "":
                 func_type_params = {}
-            flag_value = flag_value.split(',')
-            for i in range(0, len(flag_value), 2):
-                func_name = flag_value[i]
-                count = int(flag_value[i + 1])
-                type_vars = ['{}{}'.format(func_name, i) for i in range(count)]
-                func_type_params[func_name] = type_vars
+            else:
+                flag_value = flag_value.split(',')
+                for i in range(0, len(flag_value), 2):
+                    func_name = flag_value[i]
+                    count = int(flag_value[i + 1])
+                    type_vars = ['{}{}'.format(func_name, i) for i in range(count)]
+                    func_type_params[func_name] = type_vars
         elif flag_name == 'class_type_params':
-            if class_type_params is None:
+            if class_type_params is None or flag_value == "":
                 class_type_params = {}
-            flag_value = flag_value.split(',')
-            for i in range(0, len(flag_value), 2):
-                cls_name = flag_value[i]
-                count = int(flag_value[i + 1])
-                type_vars = ['{}{}'.format(cls_name, i) for i in range(count)]
-                class_type_params[cls_name] = type_vars
+            else:
+                flag_value = flag_value.split(',')
+                for i in range(0, len(flag_value), 2):
+                    cls_name = flag_value[i]
+                    count = int(flag_value[i + 1])
+                    type_vars = ['{}{}'.format(cls_name, i) for i in range(count)]
+                    class_type_params[cls_name] = type_vars
         elif flag_name in config.config:
             config.config[flag_name] = flag_value == 'True'
         else:
@@ -45,50 +44,15 @@ def configure_inference(flags):
     return class_type_params, func_type_params
 
 
-def print_help():
-    options = ["ignore_fully_annotated_function",
-               "enforce_same_type_in_branches",
-               "allow_attributes_outside_init",
-               "none_subtype_of_all",
-               "enable_soft_constraints",
-               "func_type_params",
-               "class_type_params"]
-    descriptions = ["Whether to ignore the body of fully annotated functions"
-                    " and just take the provided types for args/return.",
-                    "Whether to allow different branches to use different types of same variable.",
-                    "Whether to allow to de- fine instance attribute outside __init__.",
-                    "Whether to make None a sub-type of all types.",
-                    "Whether to use soft con- straints to infer more precise types for local variables.",
-                    "Type parameters required by generic functions.",
-                    "Type parameters required by generic classes."]
 
-    print("Typpete: Static type inference for Python 3")
-    print("Usage:")
-    print("\ttyppete file_path [working_directory] [options]")
-    print()
-    print("Options:")
-    for i, option in enumerate(options):
-        print("\t--{}:\t{}".format(option, descriptions[i]))
-
-
-def run_inference(file_name=None, base_folder=None):
-    if not file_name:
-        if len(sys.argv) >= 2 and sys.argv[1] != '--help':
-            file_name = sys.argv[1]
-            if len(sys.argv) >= 3:
-                base_folder = sys.argv[2]
-        else:
-            print_help()
-            return
+def run_inference(args, file_path: Path, base_folder: Path):
     start_time = time.time()
-    class_type_params, func_type_params = configure_inference([flag for flag in sys.argv[2:] if flag.startswith("--")])
+    class_type_params, func_type_params = configure_inference(args)
 
     if not base_folder:
-        base_folder = ''
+        base_folder = Path('')
 
-    if file_name.endswith('.py'):
-        file_name = file_name[:-3]
-
+    file_name = file_path.stem
     t = ImportHandler.get_module_ast(file_name, base_folder)
 
     solver = z3_types.TypesSolver(t, base_folder=base_folder, type_params=func_type_params,
@@ -114,12 +78,10 @@ def run_inference(file_name=None, base_folder=None):
     end_time = time.time()
     print("Constraints solving took  {}s".format(end_time - start_time))
 
-    write_path = "inference_output/" + base_folder
-    if not os.path.exists(write_path):
-        os.makedirs(write_path)
-
-    if write_path.endswith('/'):
-        write_path = write_path[:-1]
+    write_path = Path("inference_output") / base_folder
+    write_path.mkdir(parents=True, exist_ok=True)
+    # TODO: Use pathlib for rest of the code below
+    write_path = str(write_path)
 
     file = open(write_path + '/{}_constraints_log.txt'.format(file_name.replace('/', '.')), 'w')
     file.write(print_solver(solver))
@@ -234,10 +196,56 @@ def print_context(ctx, model, ind=""):
     if not ind and children:
         print("---------------------------")
 
-if __name__ == '__main__':
-    if len(sys.argv) > 1:
-        file_path = sys.argv[1]
-        base_folder = sys.argv[2] if len(sys.argv) >= 3 else None
-        run_inference(file_path, base_folder)
+def main():
+    parser = argparse.ArgumentParser(description="Static type inference for Python 3")
+    parser.add_argument(
+        "--ignore-fully-annotated-function",
+        type=int,
+        default=0,
+        help="Ignore the body of fully annotated functions and just take the provided types for args/return.",
+    )
+    parser.add_argument(
+        "--enforce-same-type-in-branches",
+        type=int,
+        default=0,
+        help="Allow different branches to use different types of same variable.",
+    )
+    parser.add_argument(
+        "--allow-attributes-outside-init",
+        type=int,
+        default=0,
+        help="Allow to define instance attribute outside __init__.",
+    )
+    parser.add_argument(
+        "--none-subtype-of-all",
+        type=int,
+        default=0,
+        help="Make None a sub-type of all types.",
+    )
+    parser.add_argument(
+        "--enable-soft-constraints",
+        type=int,
+        default=0,
+        help="Use soft contraints to infer more precise types for local variables.",
+    )
+    parser.add_argument(
+        "--func-type-params",
+        default="",
+        help="Type parameters required by generic functions.",
+    )
+    parser.add_argument(
+        "--class-type-params",
+        default="",
+        help="Type parameters required by generic classes.",
+    )
+    args, rest = parser.parse_known_args()
+
+    if len(rest):
+        file_path = Path(rest[0])
+        base_folder = Path(rest[1]) if len(rest) > 1 else file_path.parent
+        run_inference(args, file_path, base_folder)
     else:
-        print_help()
+        parser.print_help()
+
+if __name__ == '__main__':
+    main()
