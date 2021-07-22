@@ -131,6 +131,7 @@ def _infer_annotated_assign(node, context, solver):
         target_type == annotation_type,
         fail_message="Annotated assignment in line {}".format(node.lineno),
     )
+    return solver.z3_types.none
 
 
 def _infer_assign(node, context, solver):
