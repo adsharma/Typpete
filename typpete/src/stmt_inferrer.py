@@ -121,16 +121,13 @@ def _is_type_var_declaration(node):
 
 def _infer_annotated_assign(node, context, solver):
     """Infer the types of variables in annotated assignment node"""
+    annotation_type = solver.resolve_annotation(node.annotation, get_module(node))
+    context.set_type(node.target.id, annotation_type)
     if node.value:
         value_type = expr.infer(node.value, context, solver)
-        target_type = _infer_assignment_target(node.target, context, value_type, solver)
+        _infer_assignment_target(node.target, context, value_type, solver)
     else:
-        target_type = _infer_one_target(node.target, context, solver)
-    annotation_type = solver.resolve_annotation(node.annotation, get_module(node))
-    solver.add(
-        target_type == annotation_type,
-        fail_message="Annotated assignment in line {}".format(node.lineno),
-    )
+        _infer_one_target(node.target, context, solver)
     return solver.z3_types.none
 
 
