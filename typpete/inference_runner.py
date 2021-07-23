@@ -208,31 +208,31 @@ def main():
     parser.add_argument(
         "--ignore-fully-annotated-function",
         type=int,
-        default=0,
+        default=argparse.SUPPRESS,
         help="Ignore the body of fully annotated functions and just take the provided types for args/return.",
     )
     parser.add_argument(
         "--enforce-same-type-in-branches",
         type=int,
-        default=0,
+        default=argparse.SUPPRESS,
         help="Allow different branches to use different types of same variable.",
     )
     parser.add_argument(
         "--allow-attributes-outside-init",
         type=int,
-        default=0,
+        default=argparse.SUPPRESS,
         help="Allow to define instance attribute outside __init__.",
     )
     parser.add_argument(
         "--none-subtype-of-all",
         type=int,
-        default=0,
+        default=argparse.SUPPRESS,
         help="Make None a sub-type of all types.",
     )
     parser.add_argument(
         "--enable-soft-constraints",
         type=int,
-        default=0,
+        default=argparse.SUPPRESS,
         help="Use soft contraints to infer more precise types for local variables.",
     )
     parser.add_argument(
