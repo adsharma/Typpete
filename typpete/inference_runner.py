@@ -4,11 +4,9 @@ from typpete.src.import_handler import ImportHandler
 import typpete.src.config as config
 from z3 import Optimize
 
-import os
 import time
 import argparse
 import astunparse
-import sys
 
 
 def configure_inference(args):
@@ -83,12 +81,9 @@ def run_inference(args, file_path: Path, base_folder: Path):
 
     write_path = Path("inference_output") / base_folder
     write_path.mkdir(parents=True, exist_ok=True)
-    # TODO: Use pathlib for rest of the code below
-    write_path = str(write_path)
 
-    file = open(
-        write_path + "/{}_constraints_log.txt".format(file_name.replace("/", ".")), "w"
-    )
+    log_prefix = file_name.replace("/", ".")
+    file = open(write_path / Path(f"{log_prefix}_constraints_log.txt"), "w")
     file.write(print_solver(solver))
     file.close()
 
@@ -102,7 +97,7 @@ def run_inference(args, file_path: Path, base_folder: Path):
             else:
                 core = solver.unsat_core()
             core_string = "\n".join(solver.assertions_errors[c] for c in core)
-            file = open(write_path + "/{}_unsat_core.txt".format(file_name), "w")
+            file = open(write_path / Path(f"{log_prefix}_unsat_core.txt"), "w")
             file.write(core_string)
             file.close()
             model = None
@@ -159,10 +154,8 @@ def run_inference(args, file_path: Path, base_folder: Path):
         context.generate_typed_ast(model, solver)
         ImportHandler.add_required_imports(file_name, t, context)
 
-        write_path += "/" + file_name + ".py"
-
-        if not os.path.exists(os.path.dirname(write_path)):
-            os.makedirs(os.path.dirname(write_path))
+        write_path.mkdir(parents=True, exist_ok=True)
+        write_path = write_path /  Path(f"{file_name}.py")
         file = open(write_path, "w")
         file.write(astunparse.unparse(t))
         file.close()
