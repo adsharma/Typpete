@@ -37,8 +37,6 @@ def configure_inference(args):
                     class_type_params[cls_name] = type_vars
         elif flag_name in config.config:
             config.config[flag_name] = flag_value == "True"
-        else:
-            print("Invalid flag {}. Ignoring.".format(flag_name))
     return class_type_params, func_type_params
 
 
@@ -154,8 +152,12 @@ def run_inference(args, file_path: Path, base_folder: Path):
         context.generate_typed_ast(model, solver)
         ImportHandler.add_required_imports(file_name, t, context)
 
-        write_path.mkdir(parents=True, exist_ok=True)
-        write_path = write_path /  Path(f"{file_name}.py")
+        if args.overwrite:
+            write_path = base_folder
+        else:
+            write_path.mkdir(parents=True, exist_ok=True)
+            file_path = Path(f"{file_name}.py")
+        write_path = write_path / file_path
         file = open(write_path, "w")
         file.write(astunparse.unparse(t))
         file.close()
@@ -237,6 +239,12 @@ def main():
         "--class-type-params",
         default="",
         help="Type parameters required by generic classes.",
+    )
+    parser.add_argument(
+        "-i",
+        "--overwrite",
+        action="store_true",
+        help="Overwrite the source file. May lose comments and formatting",
     )
     args, rest = parser.parse_known_args()
 
