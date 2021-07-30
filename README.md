@@ -9,30 +9,42 @@
 
 
 ### Installation
-Typpete has been tested with Python 3.5 and 3.6; Python 3.7 is currently not supported.
+Typpete has been tested with Python 3.5+
 To install, follow these steps:
-- Build Z3 SMT solver. Follow the steps found [here](https://github.com/Z3Prover/z3 "Z3 GitHub Repository").
-- In the root folder (the one which contains the package and `setup.py`), run `pip install .` or `python3 setup.py install`. Note that installation via `pip` is recommended since packages installed with `setup.py` are not uninstallable (They can only be uninstalled by manually deleting their files)
+- `pip install z3-solver`
+- `pip install .`
 
 ### Usage
 You can run the inference with the following command
 ```
-$ typpete <file_name> [flags]typpete.png
+$ typpete --help
+$ typpete [flags] <filename>
 ```
-Where flags is a space separated list of options for configuring the type inference. Each flag must have the following syntax: `--flag_name=flag_value`. For example, the following is a valid configuration flag: `--allow_attributes_outside_init=True`
-
-The currently supported flags are the following:
-
-| Flag   |      Description      |  Possible values |
-|:----------:|:-------------:|:------:|
-| ignore_fully_annotated_function |  Whether to ignore the body of fully annotated functions and just take the provided types for args/return | True, False* |
-| enforce_same_type_in_branches |    Whether to allow different branches to use different types of same variable.   |  True, False* |
-| allow_attributes_outside_init | Whether to allow to define instance attribute outside `__init__` |    True*, False |
-| none_subtype_of_all | Whether to make None a subtype of all types. |    True*, False |
-
-\* Default flag value
 
 Example:
+
 ```
-$ typpete python_file.py --ignore_fully_annotated_function=True
+$ typpete test.py  # writes output to inference_output
+$ typpete -l DEBUG test.py  # additional log messages
+$ typpete -i test.py  # overwrite source. WARNING: This could lose comments and formatting!
 ```
+
+```
+# test.py
+def foo(a):
+    i = 200
+    a["foo"] = 10
+    return i
+```
+
+produces:
+
+```
+from typing import Dict
+
+def foo(a: Dict[(str, int)]) -> int:
+    i: int = 200
+    a['foo'] = 10
+    return i
+```
+
