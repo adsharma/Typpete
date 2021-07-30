@@ -11,6 +11,14 @@ class AnnotationResolver:
         self.primitives = {
             "object": z3_types.object,
             "int": z3_types.int,
+            "i8": z3_types.i8,
+            "i16": z3_types.i16,
+            "i32": z3_types.i32,
+            "i64": z3_types.i64,
+            "u8": z3_types.u8,
+            "u16": z3_types.u16,
+            "u32": z3_types.u32,
+            "u64": z3_types.u64,
             "bool": z3_types.bool,
             "float": z3_types.float,
             "complex": z3_types.complex,
@@ -39,11 +47,11 @@ class AnnotationResolver:
 
     def resolve(self, annotation, solver, module, generics_map=None, annotated=False):
         """Resolve the type annotation with the following grammar:
-        
+
         :param annotation: the type annotation to be resolved
         :param solver: the SMT solver for the program
         :param generics_map: Optional map that maps generic types names to their types in a specific function call
-                
+
         t = object | int | bool | float | complex | str | bytes | None
             | List[t]
             | Dict[t, t]
@@ -342,7 +350,7 @@ class AnnotationResolver:
     ):
 
         """Add axioms for a function call to an annotated function
-        
+
         Reprocess the type annotations for every function call to prevent binding a certain type
         to the function definition
         """

@@ -103,6 +103,7 @@ class TypesSolver(Solver):
         for st in self.z3_types.subtyping:
             self.add(st, fail_message="Subtyping error")
         self.add(self.z3_types.subst_axioms, fail_message="Subst definition")
+        self.add(self.z3_types.int_limits_axioms, fail_message="Int limits")
 
     def infer_stubs(self, context, infer_func):
         self.stubs_handler.infer_all_files(
@@ -157,6 +158,35 @@ class Z3Types:
         self.complex = type_sort.complex
         self.float = type_sort.float
         self.int = type_sort.int
+        self.fixed_width_int_types = set()
+        # fixed width
+        for w in (64, 32, 16, 8):
+            attr = f"u{w}"
+            fixed = getattr(type_sort, attr)
+            self.fixed_width_int_types.add(fixed)
+            setattr(self, attr, fixed)
+
+            attr = f"u{w}_to_int"
+            conv = Function(attr, type_sort, IntSort())
+            setattr(self, attr, conv)
+
+            attr = f"int_to_u{w}"
+            conv = Function(attr, IntSort(), type_sort)
+            setattr(self, attr, conv)
+
+            attr = f"i{w}"
+            fixed = getattr(type_sort, attr)
+            self.fixed_width_int_types.add(fixed)
+            setattr(self, attr, fixed)
+
+            attr = f"i{w}_to_int"
+            conv = Function(attr, type_sort, IntSort())
+            setattr(self, attr, conv)
+
+            attr = f"int_to_i{w}"
+            conv = Function(attr, IntSort(), type_sort)
+            setattr(self, attr, conv)
+
         self.bool = type_sort.bool
         # sequences
         self.seq = type_sort.sequence
@@ -274,6 +304,7 @@ class Z3Types:
         tree = self.create_class_tree(config.all_classes, type_sort)
         self.subtyping = self.create_subtype_axioms(tree)
         self.subst_axioms = self.create_subst_axioms(tree)
+        self.int_limits_axioms = self.create_int_limits_axioms(tree)
 
     def subtype(self, t0, t1):
         res = self._subtype(self.current_method, t0, t1)
@@ -436,7 +467,7 @@ class Z3Types:
                     options = [
                         And(
                             x == getattr(self.type_sort, c.name[0])(*accessors),
-                            *args_sub
+                            *args_sub,
                         )
                     ]
                 else:
@@ -551,6 +582,34 @@ class Z3Types:
             axioms.append(axiom)
         return axioms
 
+    def create_int_limits_axioms(self, tree):
+        x = self.new_z3_const("x", self.type_sort)
+        axioms = []
+        # unsigned
+        for w in (64, 32, 16, 8):
+            c = tree.find(f"u{w}")
+            assert c is not None
+            value = getattr(self, f"u{w}_to_int")
+            is_member = getattr(self.type_sort, f"is_u{w}")
+            axiom = ForAll(
+                [x],
+                ForAll(x, Implies(is_member(x), And(value(x) < (1 << w), value(x) >= 0)), patterns=[value(x)]),
+            )
+            axioms.append(axiom)
+        # signed
+        for w in (64, 32, 16, 8):
+            c = tree.find(f"i{w}")
+            assert c is not None
+            t = c.get_literal()
+            value = getattr(self, f"i{w}_to_int")
+            is_member = getattr(self.type_sort, f"is_i{w}")
+            axiom = ForAll(
+                [x],
+                ForAll(x, Implies(is_member(x), And(value(x) < (1 << (w - 1)), value(x) >= -(1 << w))),patterns=[value(x)]),
+            )
+            axioms.append(axiom)
+        return axioms
+
 
 def declare_type_sort(max_tuple_length, max_function_args, classes_to_base, type_vars):
     """Declare the type data type and all its constructors and accessors."""
@@ -564,6 +623,10 @@ def declare_type_sort(max_tuple_length, max_function_args, classes_to_base, type
     type_sort.declare("complex")
     type_sort.declare("float")
     type_sort.declare("int")
+    # fixed width
+    for w in (64, 32, 16, 8):
+        type_sort.declare(f"u{w}")
+        type_sort.declare(f"i{w}")
     type_sort.declare("bool")
 
     for tp in type_vars.values():

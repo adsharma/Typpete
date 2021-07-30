@@ -25,6 +25,8 @@ import typpete.src.expr_inferrer as expr
 import typpete.src.z3_axioms as axioms
 import typpete.src.z3_types as z3_types
 import sys
+
+from typing import Tuple
 from typpete.src.constants import ALIASES
 from typpete.src.config import config as inference_config
 from typpete.src.context import Context, AnnotatedFunction
@@ -85,7 +87,18 @@ def _infer_one_target(target, context, solver):
     return target_type
 
 
-def _infer_assignment_target(target, context, value_type, solver):
+def is_const_int(node) -> Tuple[bool, int]:
+    """Checks if the node is a const int and returns its value"""
+    if isinstance(node, ast.Constant):
+        return (type(node.value) == int, node.value)
+    # Handle negative integers
+    if isinstance(node, ast.UnaryOp) and isinstance(node.op, ast.USub):
+        is_int, val = is_const_int(node.operand)
+        return (is_int, -val)
+    return (False, 0)
+
+
+def _infer_assignment_target(target, context, value_type, solver, no_axiom=False):
     """Infer the type of a target in an assignment
 
     Attributes:
@@ -101,13 +114,15 @@ def _infer_assignment_target(target, context, value_type, solver):
         - Compound: Ex: a, b[0], [c, d], e["key"] = 1, 2.0, [True, False], "value"
     """
     target_type = _infer_one_target(target, context, solver)
-    solver.add(
-        axioms.assignment(target_type, value_type, solver.z3_types),
-        fail_message="Assignment in line {}".format(target.lineno),
-    )
+    if not no_axiom:
+        # No need for an axiom for fixed width int types. We know they're a subtype already
+        solver.add(
+            axioms.assignment(target_type, value_type, solver.z3_types),
+            fail_message="Assignment in line {}".format(target.lineno),
+        )
 
-    # Adding weight of 2 to give the assignment soft constraint a higher priority over others.
-    solver.optimize.add_soft(target_type == value_type, weight=2)
+        # Adding weight of 2 to give the assignment soft constraint a higher priority over others.
+        solver.optimize.add_soft(target_type == value_type, weight=2)
     return target_type
 
 
@@ -125,7 +140,18 @@ def _infer_annotated_assign(node, context, solver):
     context.set_type(node.target.id, annotation_type)
     if node.value:
         value_type = expr.infer(node.value, context, solver)
-        _infer_assignment_target(node.target, context, value_type, solver)
+        const_int, int_value = is_const_int(node.value)
+        _infer_assignment_target(
+            node.target, context, value_type, solver, no_axiom=const_int
+        )
+        if const_int and annotation_type in solver.z3_types.fixed_width_int_types:
+            fixed = solver.new_z3_const("fixed")
+            value = getattr(solver.z3_types, f"{annotation_type}_to_int")
+            is_member = getattr(solver.z3_types.type_sort, f"is_{annotation_type}")
+            solver.add(
+                [And(is_member(fixed), value(fixed) == int_value)],
+                fail_message=f"fixed width int out of range on line: {node.lineno}",
+            )
     else:
         _infer_one_target(node.target, context, solver)
     return solver.z3_types.none
