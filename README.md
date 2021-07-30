@@ -11,7 +11,6 @@
 ### Installation
 Typpete has been tested with Python 3.5+
 To install, follow these steps:
-- `pip install z3-solver`
 - `pip install .`
 
 ### Usage
