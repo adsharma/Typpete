@@ -1,12 +1,16 @@
 from pathlib import Path
 from typpete.src.stmt_inferrer import *
 from typpete.src.import_handler import ImportHandler
-import typpete.src.config as config
 from z3 import Optimize
 
-import time
 import argparse
 import astunparse
+import logging
+import time
+import typpete.src.config as config
+
+
+logger = logging.Logger("typpete")
 
 
 def configure_inference(args):
@@ -67,7 +71,7 @@ def run_inference(args, file_path: Path, base_folder: Path):
 
     solver.push()
     end_time = time.time()
-    print("Constraints collection took  {}s".format(end_time - start_time))
+    logger.debug("Constraints collection took  {}s".format(end_time - start_time))
 
     start_time = time.time()
     if config.config["enable_soft_constraints"]:
@@ -75,15 +79,16 @@ def run_inference(args, file_path: Path, base_folder: Path):
     else:
         check = solver.check(solver.assertions_vars)
     end_time = time.time()
-    print("Constraints solving took  {}s".format(end_time - start_time))
+    logger.debug("Constraints solving took  {}s".format(end_time - start_time))
 
     write_path = Path("inference_output") / base_folder
-    write_path.mkdir(parents=True, exist_ok=True)
 
-    log_prefix = file_name.replace("/", ".")
-    file = open(write_path / Path(f"{log_prefix}_constraints_log.txt"), "w")
-    file.write(print_solver(solver))
-    file.close()
+    if logging.DEBUG >= logging.root.level:
+        write_path.mkdir(parents=True, exist_ok=True)
+        log_prefix = file_name.replace("/", ".")
+        file = open(write_path / Path(f"{log_prefix}_constraints_log.txt"), "w")
+        file.write(print_solver(solver))
+        file.close()
 
     if check == z3_types.unsat:
         print("Check: unsat")
@@ -148,7 +153,6 @@ def run_inference(args, file_path: Path, base_folder: Path):
             model = solver.model()
 
     if model is not None:
-        print("Writing output to {}".format(write_path))
         context.generate_typed_ast(model, solver)
         ImportHandler.add_required_imports(file_name, t, context)
 
@@ -158,6 +162,7 @@ def run_inference(args, file_path: Path, base_folder: Path):
             write_path.mkdir(parents=True, exist_ok=True)
             file_path = Path(f"{file_name}.py")
         write_path = write_path / file_path
+        logger.debug(f"Writing output to {write_path}")
         file = open(write_path, "w")
         file.write(astunparse.unparse(t))
         file.close()
@@ -246,7 +251,19 @@ def main():
         action="store_true",
         help="Overwrite the source file. May lose comments and formatting",
     )
+    parser.add_argument("-l", "--log-level", default="INFO", help="set log level")
     args, rest = parser.parse_known_args()
+
+    try:
+        logging.basicConfig(level=args.log_level)
+        console = logging.StreamHandler()
+        console.setLevel(logging.root.level)
+        formatter = logging.Formatter("%(name)-12s: %(levelname)-8s %(message)s")
+        console.setFormatter(formatter)
+        logger.addHandler(console)
+    except ValueError:
+        logging.error(f"Invalid log level: {args.log_level}")
+        sys.exit(1)
 
     if len(rest):
         file_path = Path(rest[0])
