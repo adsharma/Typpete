@@ -277,6 +277,8 @@ class Context:
                 arg_annotation_str = solver.annotation_resolver.unparse_annotation(
                     arg_type, self.name, node.lineno, self.definition_linenos
                 )
+                if arg_annotation_str == "object":
+                    continue
                 # Add the type annotation as an AST node
                 arg.annotation = ast.parse(arg_annotation_str).body[0].value
 
@@ -349,12 +351,17 @@ class Context:
                     z3_t = model[z3_t] if model[z3_t] is not None else z3_t
                 except Z3Exception:
                     continue
-                node.__class__ = ast.AnnAssign
                 node.target = node.targets[0]
-                node.simple = 1
+                if isinstance(node.target, ast.Subscript):
+                    # a[i]: int = 10 doesn't parse well
+                    continue
                 annotation_str = solver.annotation_resolver.unparse_annotation(
                     z3_t, self.name, node.lineno, self.definition_linenos
                 )
+                if annotation_str == "object":
+                    continue
+                node.__class__ = ast.AnnAssign
+                node.simple = 1
                 node.annotation = ast.parse(annotation_str).body[0].value
 
                 names = {
