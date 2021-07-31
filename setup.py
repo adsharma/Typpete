@@ -10,7 +10,7 @@ config = {
     "download_url": "https://github.com/caterinaurban/Typpete",
     "author_email": "caterina.urban@gmail.com",
     "version": "0.1",
-    "install_requires": ["astunparse"],
+    "install_requires": ["astunparse", "z3-solver"],
     "packages": find_packages(),
     "scripts": [],
     "name": "Typpete",
