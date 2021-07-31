@@ -308,12 +308,12 @@ class Context:
     def add_assignment(self, z3_value_type, ast_node):
         """Add assignment statement node along with its z3 type to the context
 
-        At the end of the inference, add the type comment to every assignment node.
+        At the end of the inference, add the type annotation to every assignment node.
         """
         self.assignments.append((ast_node, z3_value_type))
 
     def add_annotation_to_assignments(self, model, solver):
-        """Add a type comment for every assignment statement in the context"""
+        """Add a type annotation for every assignment statement in the context"""
         for node, z3_t in self.assignments:
             if (
                 len(node.targets) == 1
@@ -364,7 +364,7 @@ class Context:
                 }
                 self.imports |= names
 
-        # Add the type comment for assignments in children contexts
+        # Add the type annotations for assignments in children contexts
         for child in self.children_contexts:
             child.add_annotation_to_assignments(model, solver)
 
