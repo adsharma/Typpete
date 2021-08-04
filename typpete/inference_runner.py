@@ -87,7 +87,7 @@ def run_inference(args, file_path: Path, base_folder: Path):
         write_path.mkdir(parents=True, exist_ok=True)
         log_prefix = file_name.replace("/", ".")
         file = open(write_path / Path(f"{log_prefix}_constraints_log.txt"), "w")
-        file.write(print_solver(solver))
+        file.write(print_solver(args, solver))
         file.close()
 
     if check == z3_types.unsat:
@@ -170,7 +170,12 @@ def run_inference(args, file_path: Path, base_folder: Path):
         ImportHandler.write_to_files(model, solver)
 
 
-def print_solver(z3solver):
+def print_solver(args, z3solver):
+    if args.sexpr:
+        options = [("auto_config", "false"), ("smt.mbqi", "false"), ("unsat_core", "true")]
+        options = "\n".join([f"(set-option :{k} {v})" for k,v in options]) + "\n"
+        assertions = "\n".join([f"(assert {a})" for a in z3solver.assertions_vars])
+        return options + z3solver.sexpr() + "\n" + assertions + "\n(check-sat)"
     printer = z3_types.z3printer
     printer.set_pp_option("max_lines", 4000)
     printer.set_pp_option("max_width", 1000)
@@ -250,6 +255,11 @@ def main():
         "--overwrite",
         action="store_true",
         help="Overwrite the source file. May lose comments and formatting",
+    )
+    parser.add_argument(
+        "--sexpr",
+        action="store_true",
+        help="Use sexpr format for outpu",
     )
     parser.add_argument("-l", "--log-level", default="INFO", help="set log level")
     args, rest = parser.parse_known_args()
