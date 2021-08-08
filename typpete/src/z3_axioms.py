@@ -63,6 +63,19 @@ def comparison_axioms(left, right, method_name, types):
         ),
     ]
 
+def fixed_width_add_axioms(left, right, result, types):
+    axioms = []
+
+    for sign in ('u', 'i'):
+        for w in (8, 16, 32):
+            fixed = getattr(types, f"{sign}{w}")
+            wider = getattr(types, f"{sign}{w * 2}")
+            axioms.append(And(left == fixed, right == fixed, result == wider))
+            # u8 + u16 = u32 (one wider than the stronger of the two)
+            axioms.append(And(left == fixed, types.subtype(right, left), result == wider))
+            axioms.append(And(right == fixed, types.subtype(left, right), result == wider))
+
+    return axioms
 
 def add(left, right, result, types):
     """Constraints for the addition operation
@@ -81,14 +94,19 @@ def add(left, right, result, types):
     return [
         And(left != types.none, right != types.none),
         Or(
+            fixed_width_add_axioms(left, right, result, types) +
             [
                 And(
                     types.subtype(left, types.complex),
+                    Not(types.subtype(left, types.u32)),
+                    Not(types.subtype(left, types.i32)),
                     types.subtype(right, left),
                     result == left,
                 ),
                 And(
                     types.subtype(right, types.complex),
+                    Not(types.subtype(right, types.u32)),
+                    Not(types.subtype(right, types.i32)),
                     types.subtype(left, right),
                     result == right,
                 ),
