@@ -66,6 +66,16 @@ def comparison_axioms(left, right, method_name, types):
 def fixed_width_add_axioms(left, right, result, types):
     axioms = []
 
+    # Handle addition of signed vs unsigned ints by ensuring that the resulting
+    # type can represent the maximum and the minimum possible value without overflow
+    if {left, right}.issubset(types.fixed_width_int_types):
+        left_sign = str(left)[0]
+        right_sign = str(right)[0]
+        if left_sign != right_sign:
+            if left_sign == 'u':
+                left = getattr(types, f"{str(left).replace('u', 'i')}")
+            else:
+                right = getattr(types, f"{str(right).replace('u', 'i')}")
     for sign in ('u', 'i'):
         for w in (8, 16, 32):
             fixed = getattr(types, f"{sign}{w}")
