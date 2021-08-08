@@ -134,7 +134,7 @@ class ImportHandler:
             imports.add("TypeVar")
 
         module_to_names = {}
-        for imp in imports:
+        for imp in sorted(imports):
             if imp not in ImportHandler.class_to_module:
                 continue
             mod = ImportHandler.class_to_module[imp]

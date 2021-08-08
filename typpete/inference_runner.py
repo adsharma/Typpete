@@ -81,7 +81,10 @@ def run_inference(args, file_path: Path, base_folder: Path):
     end_time = time.time()
     logger.debug("Constraints solving took  {}s".format(end_time - start_time))
 
-    write_path = Path("inference_output") / base_folder
+    if args.outdir is None:
+        write_path = Path("inference_output") / base_folder
+    else:
+        write_path = Path(args.outdir)
 
     if logging.DEBUG >= logging.root.level:
         write_path.mkdir(parents=True, exist_ok=True)
@@ -172,8 +175,12 @@ def run_inference(args, file_path: Path, base_folder: Path):
 
 def print_solver(args, z3solver):
     if args.sexpr:
-        options = [("auto_config", "false"), ("smt.mbqi", "false"), ("unsat_core", "true")]
-        options = "\n".join([f"(set-option :{k} {v})" for k,v in options]) + "\n"
+        options = [
+            ("auto_config", "false"),
+            ("smt.mbqi", "false"),
+            ("unsat_core", "true"),
+        ]
+        options = "\n".join([f"(set-option :{k} {v})" for k, v in options]) + "\n"
         assertions = "\n".join([f"(assert {a})" for a in z3solver.assertions_vars])
         return options + z3solver.sexpr() + "\n" + assertions + "\n(check-sat)"
     printer = z3_types.z3printer
@@ -208,7 +215,7 @@ def print_context(ctx, model, ind=""):
         print("---------------------------")
 
 
-def main():
+def main(args=None):
     parser = argparse.ArgumentParser(description="Static type inference for Python 3")
     parser.add_argument(
         "--ignore-fully-annotated-function",
@@ -261,8 +268,9 @@ def main():
         action="store_true",
         help="Use sexpr format for outpu",
     )
+    parser.add_argument("--outdir", default=None, help="Output directory")
     parser.add_argument("-l", "--log-level", default="INFO", help="set log level")
-    args, rest = parser.parse_known_args()
+    args, rest = parser.parse_known_args(args=args)
 
     try:
         logging.basicConfig(level=args.log_level)

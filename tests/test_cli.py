@@ -1,0 +1,98 @@
+import argparse
+import filecmp
+import logging
+import os.path
+import unittest
+import sys
+
+from distutils import spawn
+from functools import lru_cache
+from pathlib import Path
+from subprocess import run
+from unittest_expander import foreach, expand
+
+from typpete.inference_runner import main
+
+TESTS_DIR = Path(__file__).parent.absolute()
+ROOT_DIR = TESTS_DIR.parent
+BUILD_DIR = TESTS_DIR / "build"
+GENERATED_DIR = BUILD_DIR
+
+KEEP_GENERATED = os.environ.get("KEEP_GENERATED", False)
+SHOW_ERRORS = os.environ.get("SHOW_ERRORS", False)
+UPDATE_EXPECTED = os.environ.get("UPDATE_EXPECTED", False)
+
+
+TEST_CASES = [item.name for item in (TESTS_DIR / "cases").glob("*.py")]
+
+logger = logging.Logger("test_cli")
+
+
+@expand
+class CodeGeneratorTests(unittest.TestCase):
+    maxDiff = None
+
+    SHOW_ERRORS = SHOW_ERRORS
+    KEEP_GENERATED = KEEP_GENERATED
+    UPDATE_EXPECTED = UPDATE_EXPECTED
+
+    def setUp(self):
+        os.makedirs(BUILD_DIR, exist_ok=True)
+        os.chdir(BUILD_DIR)
+
+    @foreach(sorted(TEST_CASES))
+    def test_generated(self, case):
+        expected_filename = TESTS_DIR / "expected" / f"{case}"
+
+        if (
+            not self.UPDATE_EXPECTED
+            and not self.KEEP_GENERATED
+            and not os.path.exists(expected_filename)
+        ):
+            raise unittest.SkipTest(f"{expected_filename} not found")
+
+        case_filename = TESTS_DIR / "cases" / f"{case}"
+        case_output = GENERATED_DIR / f"{case}"
+
+        args = [
+            "--outdir",
+            str(GENERATED_DIR),
+            str(case_filename),
+        ]
+
+        try:
+            rv = main(args)
+            with open(case_output) as actual:
+                generated = actual.read()
+                if os.path.exists(expected_filename) and not self.UPDATE_EXPECTED:
+                    with open(expected_filename) as f2:
+                        expected_case_contents = f2.read()
+                        self.assertEqual(expected_case_contents, generated)
+
+            if self.UPDATE_EXPECTED or not os.path.exists(expected_filename):
+                with open(expected_filename, "w") as f:
+                    f.write(generated)
+
+        finally:
+            if not self.KEEP_GENERATED:
+                case_output.unlink(missing_ok=True)
+
+
+if __name__ == "__main__":
+    parser = argparse.ArgumentParser()
+    parser.add_argument(
+        "--keep-generated",
+        type=bool,
+        default=False,
+        help="Keep generated code for debug",
+    )
+    parser.add_argument(
+        "--update-expected", type=bool, default=False, help="Update tests/expected"
+    )
+    args, rest = parser.parse_known_args()
+
+    CodeGeneratorTests.KEEP_GENERATED |= args.keep_generated
+    CodeGeneratorTests.UPDATE_EXPECTED |= args.update_expected
+
+    rest = [sys.argv[0]] + rest
+    unittest.main(argv=rest)
