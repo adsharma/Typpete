@@ -1,5 +1,5 @@
 import ast
-import astunparse
+import astor
 import os
 from typpete.context import Context
 from typpete.stubs.stubs_paths import libraries
@@ -123,7 +123,7 @@ class ImportHandler:
             if not os.path.exists(os.path.dirname(write_path)):
                 os.makedirs(os.path.dirname(write_path))
             file = open(write_path, "w")
-            file.write(astunparse.unparse(module_ast))
+            file.write(astor.to_source(module_ast))
             file.close()
 
     @staticmethod

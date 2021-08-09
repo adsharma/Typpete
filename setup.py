@@ -11,10 +11,10 @@ config = {
     "download_url": "https://github.com/caterinaurban/Typpete",
     "author_email": "caterina.urban@gmail.com",
     "version": "0.1",
-    "install_requires": ["astunparse", "z3-solver"],
+    "install_requires": ["astor", "z3-solver"],
     "scripts": [],
     "name": "Typpete",
-    "entry_points": {"console_scripts": ["typpete=inference_runner:main"]},
+    "entry_points": {"console_scripts": ["typpete=typpete.inference_runner:main"]},
 }
 
 setup(

@@ -4,7 +4,7 @@ from typpete.import_handler import ImportHandler
 from z3 import Optimize
 
 import argparse
-import astunparse
+import astor
 import logging
 import time
 import typpete.config as config
@@ -167,7 +167,7 @@ def run_inference(args, file_path: Path, base_folder: Path):
         write_path = write_path / file_path
         logger.debug(f"Writing output to {write_path}")
         file = open(write_path, "w")
-        file.write(astunparse.unparse(t))
+        file.write(astor.to_source(t))
         file.close()
 
         ImportHandler.write_to_files(model, solver)
