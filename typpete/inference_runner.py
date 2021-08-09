@@ -1,13 +1,13 @@
 from pathlib import Path
-from typpete.src.stmt_inferrer import *
-from typpete.src.import_handler import ImportHandler
+from typpete.stmt_inferrer import *
+from typpete.import_handler import ImportHandler
 from z3 import Optimize
 
 import argparse
 import astunparse
 import logging
 import time
-import typpete.src.config as config
+import typpete.config as config
 
 
 logger = logging.Logger("typpete")

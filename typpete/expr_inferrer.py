@@ -32,12 +32,12 @@ TODO:
 """
 
 import ast
-import typpete.src.z3_axioms as axioms
+import typpete.z3_axioms as axioms
 import sys
 import z3
 
 from z3 import Or, And
-from typpete.src.context import Context, AnnotatedFunction
+from typpete.context import Context, AnnotatedFunction
 
 
 def get_module(node):

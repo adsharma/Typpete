@@ -21,16 +21,16 @@ Infers the types for the following expressions:
 """
 
 import ast
-import typpete.src.expr_inferrer as expr
-import typpete.src.z3_axioms as axioms
-import typpete.src.z3_types as z3_types
+import typpete.expr_inferrer as expr
+import typpete.z3_axioms as axioms
+import typpete.z3_types as z3_types
 import sys
 
 from typing import Tuple
-from typpete.src.constants import ALIASES
-from typpete.src.config import config as inference_config
-from typpete.src.context import Context, AnnotatedFunction
-from typpete.src.import_handler import ImportHandler
+from typpete.constants import ALIASES
+from typpete.config import config as inference_config
+from typpete.context import Context, AnnotatedFunction
+from typpete.import_handler import ImportHandler
 
 from z3 import Or, And
 

@@ -6,12 +6,12 @@ Limitations:
 """
 from collections import OrderedDict
 
-from typpete.src.annotation_resolver import AnnotationResolver
-from typpete.src.class_node import ClassNode
-from typpete.src.config import config
-from typpete.src.constants import ALIASES
-from typpete.src.pre_analysis import PreAnalyzer
-from typpete.src.stubs.stubs_handler import StubsHandler
+from typpete.annotation_resolver import AnnotationResolver
+from typpete.class_node import ClassNode
+from typpete.config import config
+from typpete.constants import ALIASES
+from typpete.pre_analysis import PreAnalyzer
+from typpete.stubs.stubs_handler import StubsHandler
 
 from z3 import *
 

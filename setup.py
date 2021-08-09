@@ -14,7 +14,7 @@ config = {
     "packages": find_packages(),
     "scripts": [],
     "name": "Typpete",
-    "entry_points": {"console_scripts": ["typpete=typpete.inference_runner:main"]},
+    "entry_points": {"console_scripts": ["typpete=inference_runner:main"]},
 }
 
 setup(**config)

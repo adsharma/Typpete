@@ -1,7 +1,7 @@
 import ast
 import os
-import typpete.src.stubs.stubs_paths as paths
-from typpete.src.context import Context
+import typpete.stubs.stubs_paths as paths
+from typpete.context import Context
 
 INFERRED = {}
 STUB_ASTS = {}
