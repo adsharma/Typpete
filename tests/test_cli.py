@@ -3,6 +3,7 @@ import filecmp
 import logging
 import os.path
 import unittest
+import subprocess
 import sys
 
 from distutils import spawn
@@ -17,6 +18,7 @@ TESTS_DIR = Path(__file__).parent.absolute()
 ROOT_DIR = TESTS_DIR.parent
 BUILD_DIR = TESTS_DIR / "build"
 GENERATED_DIR = BUILD_DIR
+FORMATTER = "black"
 
 KEEP_GENERATED = os.environ.get("KEEP_GENERATED", False)
 SHOW_ERRORS = os.environ.get("SHOW_ERRORS", False)
@@ -40,6 +42,10 @@ class CodeGeneratorTests(unittest.TestCase):
         os.makedirs(BUILD_DIR, exist_ok=True)
         os.chdir(BUILD_DIR)
 
+    @staticmethod
+    def format_code(filename):
+        return subprocess.run([FORMATTER, filename]).returncode
+
     @foreach(sorted(TEST_CASES))
     def test_generated(self, case):
         expected_filename = TESTS_DIR / "expected" / f"{case}"
@@ -62,6 +68,9 @@ class CodeGeneratorTests(unittest.TestCase):
 
         try:
             rv = main(args)
+            format_rv = self.format_code(case_output)
+            if format_rv != 0:
+                raise unittest.SkipTest(f"{FORMATTER} not available")
             with open(case_output) as actual:
                 generated = actual.read()
                 if os.path.exists(expected_filename) and not self.UPDATE_EXPECTED:
