@@ -1,7 +1,8 @@
-try:
-    from setuptools import setup, find_packages
-except ImportError:
-    from distutils.core import setup
+from setuptools import setup, find_packages
+
+with open("README.md") as readme_file:
+    readme = readme_file.read()
+
 
 config = {
     "description": "Typpete",
@@ -11,10 +12,14 @@ config = {
     "author_email": "caterina.urban@gmail.com",
     "version": "0.1",
     "install_requires": ["astunparse", "z3-solver"],
-    "packages": find_packages(),
     "scripts": [],
     "name": "Typpete",
     "entry_points": {"console_scripts": ["typpete=inference_runner:main"]},
 }
 
-setup(**config)
+setup(
+    **config,
+    long_description=readme + "\n\n",
+    long_description_content_type="text/markdown",
+    packages=find_packages(exclude=["old_tests", "unittests", "unittests*"]),
+)
