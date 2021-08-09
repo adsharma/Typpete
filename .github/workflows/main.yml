@@ -43,5 +43,5 @@ jobs:
       - name: Run black
         run: black --check */ *.py
 
-      - name: Run pyflakes
-        run: pyflakes */ *.py
+      #- name: Run pyflakes
+      #  run: pyflakes */ *.py

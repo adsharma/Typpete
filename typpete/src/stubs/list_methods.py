@@ -6,7 +6,7 @@ TT = TypeVar("TT")
 
 def append(self: List[TT], e: TT) -> None:
     """Append a new element `e` to the list `l`
-    
+
     Invoked on any list
     """
     pass

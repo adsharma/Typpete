@@ -264,9 +264,7 @@ def main(args=None):
         help="Overwrite the source file. May lose comments and formatting",
     )
     parser.add_argument(
-        "--sexpr",
-        action="store_true",
-        help="Use sexpr format for outpu",
+        "--sexpr", action="store_true", help="Use sexpr format for outpu"
     )
     parser.add_argument("--outdir", default=None, help="Output directory")
     parser.add_argument("-l", "--log-level", default="INFO", help="set log level")

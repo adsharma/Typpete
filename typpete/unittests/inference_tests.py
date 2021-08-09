@@ -55,7 +55,7 @@ class TestInference(unittest.TestCase):
     def infer_file(path, type_params=None, class_type_params=None):
         """Infer a single python program
 
-        :param path: file system path of the program to infer 
+        :param path: file system path of the program to infer
         :return: the z3 solver used to infer the program, and the global context of the program
         """
         r = open(path)

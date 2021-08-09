@@ -86,8 +86,8 @@ def copysign(
     """
     copysign(x, y)
 
-    Return a float with the magnitude (absolute value) of x but the sign 
-    of y. On platforms that support signed zeros, copysign(1.0, -0.0) 
+    Return a float with the magnitude (absolute value) of x but the sign
+    of y. On platforms that support signed zeros, copysign(1.0, -0.0)
     returns -1.0.
     """
     pass
@@ -195,7 +195,7 @@ def fmod(x: float, y: float) -> float:  # real signature unknown; restored from 
 
 
 def frexp(
-    x: float
+    x: float,
 ) -> Tuple[float, int]:  # real signature unknown; restored from __doc__
     """
     frexp(x)
@@ -208,14 +208,14 @@ def frexp(
 
 
 def fsum(
-    iterable: List[float]
+    iterable: List[float],
 ) -> float:  # real signature unknown; restored from __doc__
     """
     fsum(iterable)
-    
+
     Return an accurate floating point sum of values in the iterable.
     Assumes IEEE-754 floating point arithmetic.
-    
+
     TODO: Add support for all iterables after implementing interfaces
     """
     pass
@@ -360,7 +360,7 @@ def log2(x: float) -> float:  # real signature unknown; restored from __doc__
 
 
 def modf(
-    x: float
+    x: float,
 ) -> Tuple[float, float]:  # real signature unknown; restored from __doc__
     """
     modf(x)

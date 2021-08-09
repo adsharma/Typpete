@@ -24,7 +24,7 @@ class Iterator(Generic[Titer]):
 
 
 def abs(x: Num) -> Num:
-    """Return the absolute value of the argument. """
+    """Return the absolute value of the argument."""
     pass
 
 
@@ -89,7 +89,7 @@ def callable(_: object) -> bool:
 
 
 def chr(_: int) -> str:
-    """ Return a Unicode string of one character with ordinal i; 0 <= i <= 0x10ffff. """
+    """Return a Unicode string of one character with ordinal i; 0 <= i <= 0x10ffff."""
     pass
 
 
@@ -111,7 +111,7 @@ def dir(_: object = None) -> List[str]:
 
 
 def divmod(_: IntOrFloat, __: IntOrFloat) -> Tuple[IntOrFloat, IntOrFloat]:
-    """ Return the tuple (x//y, x%y).  Invariant: div*y + mod == x. """
+    """Return the tuple (x//y, x%y).  Invariant: div*y + mod == x."""
     pass
 
 
@@ -206,7 +206,7 @@ def next(l: Iterator[Tf]) -> Tf:
 
 
 def len(_: object) -> int:
-    """ Return the number of items in a container. """
+    """Return the number of items in a container."""
     pass
 
 

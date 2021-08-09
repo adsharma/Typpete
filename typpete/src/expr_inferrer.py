@@ -260,7 +260,7 @@ def infer_binary_operation(node, context, solver):
 
 def infer_boolean_operation(node, context, solver):
     """Infer the type of boolean operations
-    
+
     Ex:
         - 2 and str --> object
         - False or 1 --> int
@@ -625,10 +625,10 @@ def infer_func_call(node, context, solver):
 
 def _get_builtin_attr_access_axioms(instance_type, attr, result_type, context, solver):
     """Return axioms for built-in attribute access
-    
+
     Return disjunctions of equalities with all possible built-in types that have a method matching
     the attribute we are trying to access.
-    
+
     Example:
         x = [1, 2, 3]
         x.append
@@ -657,7 +657,7 @@ def _get_builtin_attr_access_axioms(instance_type, attr, result_type, context, s
 
 def infer_attribute(node, context, from_call, solver):
     """Infer the type of attribute access
-    
+
     Cases:
         - Instance attribute access. ex:
             class A:
@@ -709,7 +709,7 @@ def infer_attribute(node, context, from_call, solver):
 
 def _init_lambda_context(node, args, context, solver):
     """Initialize the local function scope, and the arguments types
-    
+
     # TODO: Reuse the _init_func_context function
     """
     local_context = Context(None, [node.body], solver, parent_context=context)
@@ -725,7 +725,7 @@ def _init_lambda_context(node, args, context, solver):
 
 def _infer_lambda(node, context, solver):
     """Infer the type of lambda functions
-    
+
     Inferred as normal function definition where the body has a single node"""
     local_context, args = _init_lambda_context(node, node.args.args, context, solver)
     return_type = infer(node.body, local_context, solver)

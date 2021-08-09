@@ -31,7 +31,7 @@ class ImportHandler:
     @staticmethod
     def get_ast(path, module_name):
         """Get the AST of a python module
-        
+
         :param path: the path to the python module
         :param module_name: the name of the python module
         """

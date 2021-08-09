@@ -60,11 +60,7 @@ class CodeGeneratorTests(unittest.TestCase):
         case_filename = TESTS_DIR / "cases" / f"{case}"
         case_output = GENERATED_DIR / f"{case}"
 
-        args = [
-            "--outdir",
-            str(GENERATED_DIR),
-            str(case_filename),
-        ]
+        args = ["--outdir", str(GENERATED_DIR), str(case_filename)]
 
         try:
             rv = main(args)

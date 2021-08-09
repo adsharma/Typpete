@@ -126,7 +126,7 @@ def split(s: str, sep: str = "", maxsplit: int = -1) -> List[str]:
 
 
 def startswith(s: str, c: str) -> bool:
-    """"""
+    """ """
     pass
 
 

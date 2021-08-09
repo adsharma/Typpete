@@ -7,8 +7,8 @@ class ShiftRegister(ActivableChip):
     SERIAL_PINS = []
     CLOCK_PIN = ""
     BUFFER_PIN = (
-        ""
-    )  # Pin that makes the SR buffer go to output pin. Leave blank if there's none
+        ""  # Pin that makes the SR buffer go to output pin. Leave blank if there's none
+    )
     RESET_PIN = ""
     RESULT_PINS = []  # Data is pushed from first pin to last
 

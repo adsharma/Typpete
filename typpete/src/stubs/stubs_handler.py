@@ -139,7 +139,7 @@ class StubsHandler:
 
     def get_relevant_ast_nodes(self, used_names):
         """Get the AST nodes which are used in the whole program stubs.
-        
+
         These nodes are used in the pre-analysis.
         """
         relevant_nodes = []
@@ -169,8 +169,8 @@ class StubsHandler:
 
     def infer_builtin_lib(self, module_name, solver, used_names, infer_func):
         """
-        
-        :param module_name: The name of the built-in library to be inferred 
+
+        :param module_name: The name of the built-in library to be inferred
         :param solver: The Z3 solver
         :param used_names: The names used in the program, to infer only relevant stubs.
         :param infer_func: The statements inference function

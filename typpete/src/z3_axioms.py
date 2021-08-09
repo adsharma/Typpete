@@ -5,8 +5,8 @@ from typpete.src.z3_types import And, Or, Implies, Not
 def overloading_axioms(left, right, result, method_name, types):
     """
     Constraints for operator overloading
-    
-    :param left: The left operand of the operation 
+
+    :param left: The left operand of the operation
     :param right: The right operand of the operation
     :param result: The result of the operation
     :param method_name: The name of the magic method responsible for overloading the operation. e.g., __add__
@@ -63,6 +63,7 @@ def comparison_axioms(left, right, method_name, types):
         ),
     ]
 
+
 def fixed_width_add_axioms(left, right, result, types):
     axioms = []
 
@@ -72,40 +73,45 @@ def fixed_width_add_axioms(left, right, result, types):
         left_sign = str(left)[0]
         right_sign = str(right)[0]
         if left_sign != right_sign:
-            if left_sign == 'u':
+            if left_sign == "u":
                 left = getattr(types, f"{str(left).replace('u', 'i')}")
             else:
                 right = getattr(types, f"{str(right).replace('u', 'i')}")
-    for sign in ('u', 'i'):
+    for sign in ("u", "i"):
         for w in (8, 16, 32):
             fixed = getattr(types, f"{sign}{w}")
             wider = getattr(types, f"{sign}{w * 2}")
             axioms.append(And(left == fixed, right == fixed, result == wider))
             # u8 + u16 = u32 (one wider than the stronger of the two)
-            axioms.append(And(left == fixed, types.subtype(right, left), result == wider))
-            axioms.append(And(right == fixed, types.subtype(left, right), result == wider))
+            axioms.append(
+                And(left == fixed, types.subtype(right, left), result == wider)
+            )
+            axioms.append(
+                And(right == fixed, types.subtype(left, right), result == wider)
+            )
 
     return axioms
 
+
 def add(left, right, result, types):
     """Constraints for the addition operation
-    
+
     Cases:
         - Number_1 + Number_2 --> Stronger(Number_1, Number_2)
         - Sequence + Sequence --> Sequence
-    
+
     Ex:
         - 1 + 2.0
         - [1, 2, 3] + [4]
         - "string" + "string2"
-    
+
     TODO: Tuples addition
     """
     return [
         And(left != types.none, right != types.none),
         Or(
-            fixed_width_add_axioms(left, right, result, types) +
-            [
+            fixed_width_add_axioms(left, right, result, types)
+            + [
                 And(
                     types.subtype(left, types.complex),
                     Not(types.subtype(left, types.u32)),
@@ -137,12 +143,12 @@ def add(left, right, result, types):
 
 def mult(left, right, result, types):
     """Constraints for the multiplication operation
-    
+
     Cases:
         - Number_1 * Number_2 --> Stronger(Number_1, Number_2)
         - Int * Sequence --> Sequence
         - Sequence * Int --> Sequence
-        
+
     Ex:
         - 1 * 2.0
         - 3 * [1, 2]
@@ -190,7 +196,7 @@ def div(left, right, result, types):
 
     Cases:
         - Number_1 / Number_2 --> Stronger(types.float, Stronger(Number_1, Number2))
-        
+
     Ex:
         - True / 7
         - 3 / (1 + 2j)
@@ -214,7 +220,7 @@ def arithmetic(left, right, result, magic_method, is_mod, types):
     Cases:
         - Number_1 (op) Number_2 --> Stronger(Number_1, Number_2)
         - String formatting
-        
+
     Ex:
         - 2 ** 3.0
         - 3 - 4
@@ -244,7 +250,7 @@ def bitwise(left, right, result, magic_method, types):
 
     Cases:
         - (Number_1: Int/Bool) (op) (Number_2: Int/Bool) --> Stronger(Number_1, Number_2)
-        
+
     Ex:
         - 1 & 2
         - True ^ False
@@ -262,9 +268,9 @@ def bitwise(left, right, result, magic_method, types):
 
 def bool_op(values, result, types):
     """Constrains for boolean operations (and/or)
-    
+
     The result is the supertype (or numerically stronger) of all operands.
-     
+
     Ex:
         - 2 and str --> object
         - False or 1 --> int
@@ -274,9 +280,9 @@ def bool_op(values, result, types):
 
 def unary_invert(unary, types):
     """Constraints for the invert unary operation
-    
+
     Only subtypes for int are eligible for this operation (No floats)
-    
+
     Ex:
     - ~231
     """
@@ -285,10 +291,10 @@ def unary_invert(unary, types):
 
 def unary_other(unary, result, types):
     """Constraints for any unary operation except (~) and (not)
-    
+
     Cases:
         - (op) Number --> Stronger(Int, Number)
-        
+
     Ex:
         - -True
         - +2.0
@@ -303,7 +309,7 @@ def unary_other(unary, result, types):
 
 def if_expr(a, b, result, types):
     """Constraints for if expressions
-    
+
     Cases:
         - (a) if (TEST) else (b) --> Super(a, b)
     """
@@ -312,7 +318,7 @@ def if_expr(a, b, result, types):
 
 def index(indexed, ind, result, types):
     """Constraints for index subscript
-    
+
     Cases:
         - List[t] --> t
         - str --> str
@@ -332,7 +338,7 @@ def index(indexed, ind, result, types):
         t.append(
             And(
                 indexed == types.tuples[cur_len](*tuple_args),
-                *[types.subtype(x, result) for x in tuple_args]
+                *[types.subtype(x, result) for x in tuple_args],
             )
         )
 
@@ -374,7 +380,7 @@ def index(indexed, ind, result, types):
 
 def slicing(lower, upper, step, sliced, result, types):
     """Constraints for slicing subscript
-    
+
     Cases:
         - Sequence --> Sequence
     """
@@ -396,7 +402,7 @@ def slicing(lower, upper, step, sliced, result, types):
 
 def generator(iterable, target, types):
     """Constraints for comprehension generators
-    
+
     Ex:
         - [x for x in [1, 2]]
         - [x for x in {1, 2}]
@@ -417,7 +423,7 @@ def generator(iterable, target, types):
 
 def assignment(target, value, types):
     """Constraints for variable assignment.
-    
+
     The left hand side is either a super type or a numerically stronger type of the right hand side.
     """
     return [types.subtype(value, target)]
@@ -425,11 +431,11 @@ def assignment(target, value, types):
 
 def subscript_assignment(target, types):
     """Constraints for subscript assignment
-    
+
     Cases:
         - Index assignment
         - Slice assignment
-        
+
     strings, bytes and tuples are immutable objects. i.e., they don't support subscript assignments
     """
     return [
@@ -441,7 +447,7 @@ def subscript_assignment(target, types):
 
 def delete_subscript(indexed, types):
     """Constraints for subscript deletion
-    
+
     Prevent subscript deletion of tuples, strings and bytes (Immutable sequences)
     """
     return [
@@ -457,7 +463,7 @@ def delete_subscript(indexed, types):
 
 def body(result, new, types):
     """Constraints for body statements
-    
+
     The body type is the super-type of all its statements, or none if no statement returns type.
     """
     return [Implies(new != types.none, result == new)]
@@ -499,7 +505,7 @@ def try_except(then, orelse, final, result, types):
 
 def one_type_instantiation(class_name, args, result, types, tvs):
     """Constraints for class instantiation, if the class name is known
-    
+
     :param class_name: The class to be instantiated
     :param args: the types of the arguments passed to the class instantiation
     :param result: The resulting instance from instantiation
@@ -560,10 +566,10 @@ def one_type_instantiation(class_name, args, result, types, tvs):
 
 def instance_axioms(called, args, result, types, tvs):
     """Constraints for class instantiation
-    
+
     A class instantiation corresponds to a normal function call to the __init__ function, where
     the return type will be an instance of this class.
-    
+
     The called maybe of any user-defined type in the program, so the call is asserted
     with the __init__ function of every call
     """
@@ -717,7 +723,7 @@ def generic_call_axioms(called, args, result, types, tvs):
 
 def call(called, args, result, types, tvs):
     """Constraints for calls
-    
+
     Cases:
         - Function call
         - Class instantiation
@@ -732,7 +738,7 @@ def call(called, args, result, types, tvs):
 
 def class_call_axioms(called, args, result, types):
     """Constraints for callable classes
-    
+
     Assert with all classes which have the method `__call__`.
     """
     axioms = []
@@ -753,7 +759,7 @@ def class_call_axioms(called, args, result, types):
 
 def staticmethod_call(class_type, args, result, attr, types):
     """Constraints for staticmethod calls
-    
+
     Assert with all classes which has the method `attr` which has decorator `staticmethod`
     """
     axioms = []
@@ -782,7 +788,7 @@ def instancemethod_call(instance, args, result, attr, types, tvs):
     In the first case, check that it appears in the class instance methods and is not static method
     In the second case, check that it does not appear in the class instance methods but appears in the
         class attributes
-        
+
     Add the receiver argument in the first case only
     `
     """
@@ -839,7 +845,7 @@ def instancemethod_call(instance, args, result, attr, types, tvs):
 
 def attribute(instance, attr, result, types):
     """Constraints for attribute access
-    
+
     Assert with all classes having the attribute attr
     """
     axioms = []

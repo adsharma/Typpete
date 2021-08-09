@@ -593,7 +593,11 @@ class Z3Types:
             is_member = getattr(self.type_sort, f"is_u{w}")
             axiom = ForAll(
                 [x],
-                ForAll(x, Implies(is_member(x), And(value(x) < (1 << w), value(x) >= 0)), patterns=[value(x)]),
+                ForAll(
+                    x,
+                    Implies(is_member(x), And(value(x) < (1 << w), value(x) >= 0)),
+                    patterns=[value(x)],
+                ),
             )
             axioms.append(axiom)
         # signed
@@ -605,7 +609,14 @@ class Z3Types:
             is_member = getattr(self.type_sort, f"is_i{w}")
             axiom = ForAll(
                 [x],
-                ForAll(x, Implies(is_member(x), And(value(x) < (1 << (w - 1)), value(x) >= -(1 << w))),patterns=[value(x)]),
+                ForAll(
+                    x,
+                    Implies(
+                        is_member(x),
+                        And(value(x) < (1 << (w - 1)), value(x) >= -(1 << w)),
+                    ),
+                    patterns=[value(x)],
+                ),
             )
             axioms.append(axiom)
         return axioms

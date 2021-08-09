@@ -19,16 +19,16 @@ def get_module(node):
 
 class PreAnalyzer:
     """Analyzer for the AST, It provides the following configurations before the type inference:
-        - The maximum args length of functions in the whole program
-        - The maximum tuple length in the whole program
-        - All the used names (variables, functions, classes, etc.) in the program,
-            to be used in inferring relevant stub functions.
-        - Class and instance attributes
+    - The maximum args length of functions in the whole program
+    - The maximum tuple length in the whole program
+    - All the used names (variables, functions, classes, etc.) in the program,
+        to be used in inferring relevant stub functions.
+    - Class and instance attributes
     """
 
     def __init__(self, prog_ast, base_folder, stubs_handler):
         """
-        :param prog_ast: The AST for the python program  
+        :param prog_ast: The AST for the python program
         """
         # List all the nodes existing in the AST
         self.base_folder = base_folder
@@ -195,13 +195,13 @@ class PreAnalyzer:
 
     def analyze_classes(self, conf):
         """Pre-analyze and configure classes before the type inference
-        
+
         Do the following:
             - Propagate methods from bases to subclasses.
             - Add __init__ function to classes if it doesn't exist.
             - Return a mapping from class names to their attributes and methods.
             - Return a mapping from class names to their base classes if they have any.
-            
+
 
         """
         class_defs = [
@@ -452,8 +452,8 @@ class Configuration:
 
 def get_non_empty_lists(lists):
     """
-    
-    :param lists: list of lists 
+
+    :param lists: list of lists
     :return: list of lists of positive length
     """
     return [l for l in lists if l]
@@ -461,7 +461,7 @@ def get_non_empty_lists(lists):
 
 def merge(*lists):
     """Merge the lists according to C3 algorithm
-    
+
     - Select first head of the lists which doesn't appear in the tail of any other list.
     - The selected element is removed from all the lists where it appears as a head and addead to the output list.
     - Repeat the above two steps until all the lists are empty

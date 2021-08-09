@@ -36,7 +36,7 @@ class Vehicle(metaclass=ABCMeta):
 
     @abstractmethod
     def vehicle_type(self):
-        """"Return a string representing the type of vehicle this is."""
+        """Return a string representing the type of vehicle this is."""
         pass
 
 
@@ -47,7 +47,7 @@ class Car(Vehicle):
     wheels = 4
 
     def vehicle_type(self):
-        """"Return a string representing the type of vehicle this is."""
+        """Return a string representing the type of vehicle this is."""
         return "car"
 
 
@@ -58,7 +58,7 @@ class Truck(Vehicle):
     wheels = 4
 
     def vehicle_type(self):
-        """"Return a string representing the type of vehicle this is."""
+        """Return a string representing the type of vehicle this is."""
         return "truck"
 
 
@@ -69,7 +69,7 @@ class Motorcycle(Vehicle):
     wheels = 2
 
     def vehicle_type(self):
-        """"Return a string representing the type of vehicle this is."""
+        """Return a string representing the type of vehicle this is."""
         return "motorcycle"
 
 

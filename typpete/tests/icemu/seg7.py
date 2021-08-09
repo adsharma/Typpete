@@ -22,8 +22,7 @@ class LED:
 
 
 def combine_repr(segs):
-    """Combine and returns __str__ repr of multiple Segment7
-    """
+    """Combine and returns __str__ repr of multiple Segment7"""
     outputs = [str(seg) for seg in segs]
     line1 = " ".join([s[:3] for s in outputs])
     line2 = " ".join([s[4:7] for s in outputs])
