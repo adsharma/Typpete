@@ -1,4 +1,5 @@
 from pathlib import Path
+from types import SimpleNamespace
 from typpete.stmt_inferrer import *
 from typpete.import_handler import ImportHandler
 from z3 import Optimize
@@ -44,29 +45,23 @@ def configure_inference(args):
     return class_type_params, func_type_params
 
 
-def run_inference(args, file_path: Path, base_folder: Path):
+def infer_types_ast(input_ast: ast.AST, args=SimpleNamespace(), base_folder=Path(".")):
     start_time = time.time()
     class_type_params, func_type_params = configure_inference(args)
 
-    if not base_folder:
-        base_folder = Path("")
-
-    file_name = file_path.stem
-    t = ImportHandler.get_module_ast(file_name, base_folder)
-
     solver = z3_types.TypesSolver(
-        t,
+        input_ast,
         base_folder=base_folder,
         type_params=func_type_params,
         class_type_params=class_type_params,
     )
 
-    context = Context(t, t.body, solver)
+    context = Context(input_ast, input_ast.body, solver)
     context.type_params = solver.config.type_params
     context.class_type_params = solver.config.class_type_params
     solver.infer_stubs(context, infer)
 
-    for stmt in t.body:
+    for stmt in input_ast.body:
         infer(stmt, context, solver)
 
     solver.push()
@@ -80,6 +75,27 @@ def run_inference(args, file_path: Path, base_folder: Path):
         check = solver.check(solver.assertions_vars)
     end_time = time.time()
     logger.debug("Constraints solving took  {}s".format(end_time - start_time))
+
+    model = None
+    if check != z3_types.unsat:
+        if config.config["enable_soft_constraints"]:
+            model = solver.optimize.model()
+        else:
+            model = solver.model()
+
+    if model is not None:
+        context.generate_typed_ast(model, solver)
+
+    return (check, context, solver, model)
+
+
+def run_inference(args, file_path: Path, base_folder: Path):
+    if not base_folder:
+        base_folder = Path("")
+
+    file_name = file_path.stem
+    t = ImportHandler.get_module_ast(file_name, base_folder)
+    check, context, solver, model = infer_types_ast(t, args, base_folder)
 
     if args.outdir is None:
         write_path = Path("inference_output") / base_folder
@@ -149,14 +165,8 @@ def run_inference(args, file_path: Path, base_folder: Path):
                 if not model[av]:
                     print("Unsat:")
                     print(solver.assertions_errors[av])
-    else:
-        if config.config["enable_soft_constraints"]:
-            model = solver.optimize.model()
-        else:
-            model = solver.model()
 
     if model is not None:
-        context.generate_typed_ast(model, solver)
         ImportHandler.add_required_imports(file_name, t, context)
 
         if args.overwrite:
