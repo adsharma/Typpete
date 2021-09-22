@@ -1,6 +1,15 @@
 import ast
 import astor
 import os
+import sys
+from pathlib import Path
+from typeshed_client.finder import (
+    get_search_context,
+    PythonVersion,
+    get_stub_file,
+    SearchContext,
+)
+from typing import Optional
 from typpete.context import Context
 from typpete.stubs.stubs_paths import libraries
 from typpete.stubs.stubs_handler import STUB_ASTS
@@ -28,8 +37,10 @@ class ImportHandler:
         "Iterator": ("typing", 0),
     }
 
+    CTX = get_search_context()
+
     @staticmethod
-    def get_ast(path, module_name):
+    def get_ast(module_path, module_name):
         """Get the AST of a python module
 
         :param path: the path to the python module
@@ -37,19 +48,23 @@ class ImportHandler:
         """
         if module_name in ImportHandler.cached_asts:
             return ImportHandler.cached_asts[module_name]
-        if path in STUB_ASTS:
-            return STUB_ASTS[path]
-        try:
-            if os.path.isdir(path[:-3]):
-                path = path[:-3]
-                path += "/__init__.py"
-            r = open(path)
-        except FileNotFoundError:
-            raise ImportError("No module named {}.".format(module_name))
+        if module_path in STUB_ASTS:
+            return STUB_ASTS[module_path]
+        path = Path(module_path)
+        maybe_dir = path.parent / path.stem
+        if maybe_dir.is_dir():
+            path = path.parent / Path("__init__.py")
+        if not path.exists():
+            for p in sys.path:
+                path = Path(p) / path.name
+                if path.exists():
+                    break
+        if not path.exists():
+            raise ImportError(f"No module {module_name} in {module_path}")
 
         ImportHandler.module_to_path[module_name] = path
-        tree = ast.parse(r.read())
-        r.close()
+        with open(path) as f:
+            tree = ast.parse(f.read())
         ImportHandler.cached_asts[module_name] = tree
         return tree
 
@@ -68,10 +83,23 @@ class ImportHandler:
         )
 
     @staticmethod
-    def get_builtin_ast(module_name):
+    def get_builtin_stub(module_name) -> Optional[Path]:
         """Return the AST of a built-in module"""
-        directory = os.path.dirname(__file__) + "/stubs/"
-        return ImportHandler.get_ast(directory + libraries[module_name], module_name)
+        return get_stub_file(module_name, search_context=ImportHandler.CTX)
+
+    @staticmethod
+    def get_builtin_ast(module_name) -> Optional[ast.AST]:
+        """Return the AST of a built-in module"""
+        # Add any other modules that cause infinite loops here
+        # TODO: a more robust solution needed
+        if module_name in {"sys"}:
+            return ast.parse("")
+        stub = ImportHandler.get_builtin_stub(module_name)
+        if stub is not None:
+            with open(stub) as f:
+                tree = ast.parse(f.read())
+                return tree
+        return None
 
     @staticmethod
     def infer_import(module_name, base_folder, infer_func, solver):
@@ -79,11 +107,12 @@ class ImportHandler:
         if module_name in ImportHandler.cached_modules:
             # Return the cached context if this module is already inferred before
             return ImportHandler.cached_modules[module_name]
-        if ImportHandler.is_builtin(module_name):
+        builtin_ast = ImportHandler.get_builtin_ast(module_name)
+        if builtin_ast is not None:
             ImportHandler.cached_modules[
                 module_name
             ] = solver.stubs_handler.infer_builtin_lib(
-                module_name, solver, solver.config.used_names, infer_func
+                module_name, solver, solver.config.used_names, infer_func, builtin_ast
             )
         else:
             t = ImportHandler.get_module_ast(module_name, base_folder)

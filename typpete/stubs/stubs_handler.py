@@ -115,7 +115,8 @@ class StubsHandler:
             for name in node.names:
                 if name.name in name_nodes and not appended:
                     appended = True
-                    relevant_nodes.append(self.lib_asts[node.module])
+                    if node.module in self.lib_asts:
+                        relevant_nodes.append(self.lib_asts[node.module])
                     relevant_nodes.append(node)
                     used_names.append(name.name)
 
@@ -167,17 +168,18 @@ class StubsHandler:
             )
             context.builtin_methods.update(ctx.builtin_methods)
 
-    def infer_builtin_lib(self, module_name, solver, used_names, infer_func):
+    def infer_builtin_lib(self, module_name, solver, used_names, infer_func, builtin_ast):
         """
 
         :param module_name: The name of the built-in library to be inferred
         :param solver: The Z3 solver
         :param used_names: The names used in the program, to infer only relevant stubs.
         :param infer_func: The statements inference function
+        :param builtin_ast: ast from typeshed_client
         :return: The context containing types of the relevant stubs.
         """
         if module_name not in self.lib_asts:
-            raise ImportError("No module named {}".format(module_name))
+            self.lib_asts[module_name] = builtin_ast
         lib_ast = self.lib_asts[module_name]
         all_nodes = ast.walk(lib_ast)
         for n in all_nodes:

@@ -54,19 +54,18 @@ class PreAnalyzer:
             for name in node.names:
                 if name in self.analyzed:
                     continue
-                if ImportHandler.is_builtin(name.name):
-                    new_ast = ImportHandler.get_builtin_ast(name.name)
-                else:
+                new_ast = ImportHandler.get_builtin_ast(name.name)
+                if not new_ast:
                     new_ast = ImportHandler.get_module_ast(name.name, self.base_folder)
+                if name.name in {"sys", "typing", "_typeshed"}:
+                    continue
                 self.analyzed.add(name)
                 result += self.walk(new_ast)
         for node in import_from_nodes:
-            if node.module == "typing":
-                # FIXME ignore typing for now, not to break type vars
+            if node.module in {"sys", "typing", "_typeshed"}:
                 continue
-            if ImportHandler.is_builtin(node.module):
-                new_ast = ImportHandler.get_builtin_ast(node.module)
-            else:
+            new_ast = ImportHandler.get_builtin_ast(node.module)
+            if not new_ast:
                 new_ast = ImportHandler.get_module_ast(node.module, self.base_folder)
             result += self.walk(new_ast)
 
@@ -243,7 +242,7 @@ class PreAnalyzer:
                 )
 
             if real_bases:
-                class_to_base[key] = [x.id for x in cls.bases]
+                class_to_base[key] = [x.id for x in cls.bases if hasattr(x, "id")]
             else:
                 class_to_base[key] = ["object"]
 
@@ -287,9 +286,10 @@ class PreAnalyzer:
                     for d in cls_stmt.decorator_list:
                         decorator = d.id if isinstance(d, ast.Name) else d.attr
                         if decorator not in config["decorators"]:
-                            raise TypeError(
-                                "Decorator {} is not supported".format(decorator)
-                            )
+                            pass
+                            # raise TypeError(
+                            #     "Decorator {} is not supported".format(decorator)
+                            # )
                         has_abstract_method |= decorator == "abstractmethod"
                         decorators.append(decorator)
                     class_funcs[cls_stmt.name] = (
@@ -503,6 +503,8 @@ def merge(*lists):
 
 def get_linearization(cls, class_to_bases):
     """Apply C3 linearization algorithm to resolve the MRO."""
+    if cls not in class_to_bases:
+        return []
     bases = class_to_bases[cls]
     bases_linearizations = [get_linearization(x, class_to_bases) for x in bases]
     return [cls] + merge(
@@ -548,6 +550,8 @@ def propagate_attributes_to_subclasses(class_defs):
                 for stmt in (class_def.body + class_to_inherited_attrs[class_def.name])
                 if isinstance(stmt, ast.Assign)
             }
+            if parent not in class_to_node:
+                continue
 
             parent_node = class_to_node[parent]
             # Select only functions that are not overridden in the subclasses.
